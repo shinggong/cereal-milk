@@ -504,10 +504,10 @@ function grainLayer(f,x){
   const w=f.w,h=f.h,r=seeded(f.name.charCodeAt(0)*131+w);
   for(const [x0,y0,x1,y1] of [[0,0,0,10],[0,h,0,h-10],[0,0,10,0],[w,0,w-10,0]]){
     const g=x.createLinearGradient(x0,y0,x1,y1);g.addColorStop(0,'rgba(60,45,35,.08)');g.addColorStop(1,'rgba(60,45,35,0)');x.fillStyle=g;x.fillRect(0,0,w,h)}
-  for(let i=0;i<70;i++){const cx=r()*w,cy=r()*h,rad=8+r()*40,g=x.createRadialGradient(cx,cy,0,cx,cy,rad),a=.018+r()*.03; // 얼룩덜룩한 종이 톤
+  for(let i=0;i<70;i++){const cx=r()*w,cy=r()*h,rad=8+r()*40,g=x.createRadialGradient(cx,cy,0,cx,cy,rad),a=.012+r()*.02; // 얼룩덜룩한 종이 톤
     g.addColorStop(0,r()<.5?`rgba(70,50,35,${a})`:`rgba(255,255,255,${a*1.6})`);g.addColorStop(1,'rgba(0,0,0,0)');x.fillStyle=g;x.fillRect(cx-rad,cy-rad,rad*2,rad*2)}
-  for(let i=0,n=Math.round(w*h/1.6);i<n;i++){const d=r()<.55;x.fillStyle=d?`rgba(45,32,22,${.04+r()*.07})`:`rgba(255,255,255,${.05+r()*.09})`;x.fillRect(r()*w,r()*h,.55+r()*.5,.55+r()*.5)}
-  for(let i=0;i<260;i++){x.strokeStyle=`rgba(60,45,30,${.03+r()*.04})`;x.lineWidth=.35;const fx=r()*w,fy=r()*h,a=r()*6.28,l=1.5+r()*5;x.beginPath();x.moveTo(fx,fy);x.lineTo(fx+Math.cos(a)*l,fy+Math.sin(a)*l);x.stroke()} // 종이 섬유
+  for(let i=0,n=Math.round(w*h/1.6);i<n;i++){const d=r()<.55;x.fillStyle=d?`rgba(45,32,22,${.025+r()*.045})`:`rgba(255,255,255,${.03+r()*.06})`;x.fillRect(r()*w,r()*h,.55+r()*.5,.55+r()*.5)}
+  for(let i=0;i<260;i++){x.strokeStyle=`rgba(60,45,30,${.02+r()*.025})`;x.lineWidth=.35;const fx=r()*w,fy=r()*h,a=r()*6.28,l=1.5+r()*5;x.beginPath();x.moveTo(fx,fy);x.lineTo(fx+Math.cos(a)*l,fy+Math.sin(a)*l);x.stroke()} // 종이 섬유
   for(let i=0;i<90;i++){
     const side=r()*4|0,t=r(),corner=Math.min(t,1-t)<.08,d=Math.pow(r(),2)*(corner?6:3),len=.6+r()*(corner?5:2.5);
     const px=side<2?t*w:(side===2?d:w-d-len),py=side<2?(side===0?d:h-d-1):t*h;
@@ -634,20 +634,24 @@ if(window.THREE){
   const paper=(map,bump,b)=>new THREE.MeshStandardMaterial({map,bumpMap:bump,bumpScale:b,roughness:.95,metalness:0,envMapIntensity:.12});
   const mats=FACES.map(f=>{
     f.tex=new THREE.CanvasTexture(f.cv);f.tex.encoding=THREE.sRGBEncoding;f.tex.anisotropy=aniso;
-    return paper(f.tex,bumpFor(f),.02);
+    return paper(f.tex,bumpFor(f),.012);
   });
   /* 윗면: 상자 안쪽(어두운 판지) 위에 뚜껑 날개가 살짝 들려 있음 */
   const ic=document.createElement('canvas');ic.width=600;ic.height=192;const ix=ic.getContext('2d'),ig=ix.createLinearGradient(0,0,0,192);
   const bu=RAD/(2*HW)*600,bv=RAD/(2*HD)*192; // 둥근 모서리 부분은 겉 종이색, 안쪽만 어두운 판지
   ix.fillStyle='#f3efe8';ix.fillRect(0,0,600,192);
   ig.addColorStop(0,'#2a221d');ig.addColorStop(.5,'#1b1512');ig.addColorStop(1,'#2a221d');ix.fillStyle=ig;ix.fillRect(bu,bv,600-2*bu,192-2*bv);
+  {const r=seeded(31);for(let i=0;i<9000;i++){ix.fillStyle=r()<.55?`rgba(45,32,22,${.05+r()*.08})`:`rgba(255,255,255,${.05+r()*.08})`;ix.fillRect(r()*600,r()*192,1.2,1.2)}} // 모서리 종이에도 결
   const inTex=new THREE.CanvasTexture(ic);inTex.encoding=THREE.sRGBEncoding;
-  mats[2]=new THREE.MeshStandardMaterial({map:inTex,roughness:1,metalness:0});
+  mats[2]=new THREE.MeshStandardMaterial({map:inTex,color:0xe8e4de,roughness:1,metalness:0});
   boxMesh=new THREE.Mesh(boxGeometry(),mats);boxMesh.rotation.order='XYZ';scene3.add(boxMesh);
-  const edge=new THREE.MeshStandardMaterial({color:0xddd2c4,roughness:.95}),under=new THREE.MeshStandardMaterial({color:0xcfc6ba,roughness:1});
+  const ec=document.createElement('canvas');ec.width=512;ec.height=16;const ex=ec.getContext('2d'),er=seeded(77); // 날개 두께 면도 판지 결
+  ex.fillStyle='#ddd2c4';ex.fillRect(0,0,512,16);for(let i=0;i<2600;i++){ex.fillStyle=er()<.55?`rgba(70,50,35,${.06+er()*.08})`:`rgba(255,255,255,${.08+er()*.1})`;ex.fillRect(er()*512,er()*16,1,1)}
+  const eTex=new THREE.CanvasTexture(ec);eTex.encoding=THREE.sRGBEncoding;eTex.anisotropy=aniso;
+  const edge=new THREE.MeshStandardMaterial({map:eTex,roughness:.95}),under=new THREE.MeshStandardMaterial({color:0xcfc6ba,roughness:1});
   /* 앞뒤 두 날개: 둥근 모서리가 끝나는 자리에 붙어 있고, 길어서 가운데서 겹침 (앞 날개가 위) */
-  const topF=face('top'),topMat=paper(topF.tex,bumpFor(topF),.02),FT=.012,FL=2*(HD-RAD)*.62,ua=RAD/(2*HD),ub=FL/(2*HD);
-  [[1,.22],[-1,.06]].forEach(([sg,ang])=>{
+  const topF=face('top'),topMat=paper(topF.tex,bumpFor(topF),.012),_tc=topMat.color.setHex(0xe8e4de),FT=.012,FL=2*(HD-RAD)*.62,ua=RAD/(2*HD),ub=FL/(2*HD);
+  [[1,.22],[-1,.015]].forEach(([sg,ang])=>{
     const g=new THREE.BoxGeometry(2*(HW-RAD)+.03,FT,FL),uv=g.attributes.uv;
     for(let i=8;i<12;i++)uv.setY(i,sg>0?ua+uv.getY(i)*ub:1-ua-ub+uv.getY(i)*ub); // 윗면 그림에서 자기 자리
     const flap=new THREE.Mesh(g,[edge,edge,topMat,under,edge,edge]),hinge=new THREE.Group();
