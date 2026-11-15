@@ -511,7 +511,7 @@ function grainLayer(f,x){
   for(let i=0;i<90;i++){
     const side=r()*4|0,t=r(),corner=Math.min(t,1-t)<.08,d=Math.pow(r(),2)*(corner?6:3),len=.6+r()*(corner?5:2.5);
     const px=side<2?t*w:(side===2?d:w-d-len),py=side<2?(side===0?d:h-d-1):t*h;
-    x.fillStyle=`rgba(255,253,248,${.3+r()*.4})`;x.fillRect(px,py,side<2?len:Math.max(.6,len*.4),side<2?Math.max(.5,len*.3):len);
+    x.fillStyle=`rgba(255,253,248,${.12+r()*.18})`;x.fillRect(px,py,side<2?len:Math.max(.6,len*.4),side<2?Math.max(.5,len*.3):len);
   }
 }
 function bumpFor(f){ // 높낮이: 종이 결 + 윗면·아랫면 날개 이음새
@@ -639,16 +639,15 @@ if(window.THREE){
   /* 윗면: 상자 안쪽(어두운 판지) 위에 뚜껑 날개가 살짝 들려 있음 */
   const ic=document.createElement('canvas');ic.width=600;ic.height=192;const ix=ic.getContext('2d'),ig=ix.createLinearGradient(0,0,0,192);
   const bu=RAD/(2*HW)*600,bv=RAD/(2*HD)*192; // 둥근 모서리 부분은 겉 종이색, 안쪽만 어두운 판지
-  ix.fillStyle='#f3efe8';ix.fillRect(0,0,600,192);
+  ix.fillStyle='#f3efe8';ix.fillRect(0,0,600,192);ix.save();ix.scale(2,2);grainLayer({name:'rim',w:300,h:96},ix);ix.restore();
   ig.addColorStop(0,'#2a221d');ig.addColorStop(.5,'#1b1512');ig.addColorStop(1,'#2a221d');ix.fillStyle=ig;ix.fillRect(bu,bv,600-2*bu,192-2*bv);
-  {const r=seeded(31);for(let i=0;i<9000;i++){ix.fillStyle=r()<.55?`rgba(45,32,22,${.05+r()*.08})`:`rgba(255,255,255,${.05+r()*.08})`;ix.fillRect(r()*600,r()*192,1.2,1.2)}} // 모서리 종이에도 결
   const inTex=new THREE.CanvasTexture(ic);inTex.encoding=THREE.sRGBEncoding;
-  mats[2]=new THREE.MeshStandardMaterial({map:inTex,color:0xe8e4de,roughness:1,metalness:0});
+  mats[2]=new THREE.MeshStandardMaterial({map:inTex,color:0xe8e4de,roughness:1,metalness:0,envMapIntensity:.12});
   boxMesh=new THREE.Mesh(boxGeometry(),mats);boxMesh.rotation.order='XYZ';scene3.add(boxMesh);
   const ec=document.createElement('canvas');ec.width=512;ec.height=16;const ex=ec.getContext('2d'),er=seeded(77); // 날개 두께 면도 판지 결
   ex.fillStyle='#ddd2c4';ex.fillRect(0,0,512,16);for(let i=0;i<2600;i++){ex.fillStyle=er()<.55?`rgba(70,50,35,${.06+er()*.08})`:`rgba(255,255,255,${.08+er()*.1})`;ex.fillRect(er()*512,er()*16,1,1)}
   const eTex=new THREE.CanvasTexture(ec);eTex.encoding=THREE.sRGBEncoding;eTex.anisotropy=aniso;
-  const edge=new THREE.MeshStandardMaterial({map:eTex,roughness:.95}),under=new THREE.MeshStandardMaterial({color:0xcfc6ba,roughness:1});
+  const edge=new THREE.MeshStandardMaterial({map:eTex,roughness:.95,envMapIntensity:.12}),under=new THREE.MeshStandardMaterial({color:0xcfc6ba,roughness:1,envMapIntensity:.12}); // 주변광 반사를 종이와 같게 낮춰야 하얗게 안 날아감
   /* 앞뒤 두 날개: 둥근 모서리가 끝나는 자리에 붙어 있고, 길어서 가운데서 겹침 (앞 날개가 위) */
   const topF=face('top'),topMat=paper(topF.tex,bumpFor(topF),.004),_tc=topMat.color.setHex(0xe8e4de),FT=.012,FL=2*(HD-RAD)*.62,ua=RAD/(2*HD),ub=FL/(2*HD);
   const Y0=HH-.004,DT=.009; // 아래부터: 양옆 작은 날개 → 뒤 날개 → 앞 날개
@@ -660,7 +659,10 @@ if(window.THREE){
     hinge.rotation.x=sg*ang;boxMesh.add(hinge);
   });
   /* 양옆 작은 날개: 앞 날개가 들린 옆 틈을 받쳐서 이음새가 깔끔하게 보임 */
-  const dMat=new THREE.MeshStandardMaterial({map:eTex,color:0xf6f1ea,roughness:.95}),DL=.34,DZ=2*(HD-RAD)-.07;
+  const DL=.34,DZ=2*(HD-RAD)-.07,dc=document.createElement('canvas');dc.width=Math.round(DL/U*RES);dc.height=Math.round(DZ/U*RES);
+  {const x=dc.getContext('2d');x.scale(RES,RES);x.fillStyle='#f3efe8';x.fillRect(0,0,DL/U,DZ/U);grainLayer({name:'dust',w:DL/U,h:DZ/U},x)}
+  const dTex=new THREE.CanvasTexture(dc);dTex.encoding=THREE.sRGBEncoding;dTex.anisotropy=aniso;
+  const dMat=new THREE.MeshStandardMaterial({map:dTex,color:0xe8e4de,roughness:.95,envMapIntensity:.12});
   [1,-1].forEach(sx=>{
     const d=new THREE.Mesh(new THREE.BoxGeometry(DL,DT,DZ),[edge,edge,dMat,under,edge,edge]);
     d.position.set(sx*(HW-RAD-DL/2+.002),Y0+DT/2,-.035);boxMesh.add(d);
