@@ -634,7 +634,7 @@ if(window.THREE){
   const paper=(map,bump,b)=>new THREE.MeshStandardMaterial({map,bumpMap:bump,bumpScale:b,roughness:.95,metalness:0,envMapIntensity:.12});
   const mats=FACES.map(f=>{
     f.tex=new THREE.CanvasTexture(f.cv);f.tex.encoding=THREE.sRGBEncoding;f.tex.anisotropy=aniso;
-    return paper(f.tex,bumpFor(f),.012);
+    return paper(f.tex,bumpFor(f),.004);
   });
   /* 윗면: 상자 안쪽(어두운 판지) 위에 뚜껑 날개가 살짝 들려 있음 */
   const ic=document.createElement('canvas');ic.width=600;ic.height=192;const ix=ic.getContext('2d'),ig=ix.createLinearGradient(0,0,0,192);
@@ -650,13 +650,20 @@ if(window.THREE){
   const eTex=new THREE.CanvasTexture(ec);eTex.encoding=THREE.sRGBEncoding;eTex.anisotropy=aniso;
   const edge=new THREE.MeshStandardMaterial({map:eTex,roughness:.95}),under=new THREE.MeshStandardMaterial({color:0xcfc6ba,roughness:1});
   /* 앞뒤 두 날개: 둥근 모서리가 끝나는 자리에 붙어 있고, 길어서 가운데서 겹침 (앞 날개가 위) */
-  const topF=face('top'),topMat=paper(topF.tex,bumpFor(topF),.012),_tc=topMat.color.setHex(0xe8e4de),FT=.012,FL=2*(HD-RAD)*.62,ua=RAD/(2*HD),ub=FL/(2*HD);
-  [[1,.22],[-1,.015]].forEach(([sg,ang])=>{
-    const g=new THREE.BoxGeometry(2*(HW-RAD)+.03,FT,FL),uv=g.attributes.uv;
+  const topF=face('top'),topMat=paper(topF.tex,bumpFor(topF),.004),_tc=topMat.color.setHex(0xe8e4de),FT=.012,FL=2*(HD-RAD)*.62,ua=RAD/(2*HD),ub=FL/(2*HD);
+  const Y0=HH-.004,DT=.009; // 아래부터: 양옆 작은 날개 → 뒤 날개 → 앞 날개
+  [[1,.18,0],[-1,.015,DT]].forEach(([sg,ang,lift])=>{
+    const g=new THREE.BoxGeometry(2*(HW-RAD)+.004,FT,FL),uv=g.attributes.uv;
     for(let i=8;i<12;i++)uv.setY(i,sg>0?ua+uv.getY(i)*ub:1-ua-ub+uv.getY(i)*ub); // 윗면 그림에서 자기 자리
     const flap=new THREE.Mesh(g,[edge,edge,topMat,under,edge,edge]),hinge=new THREE.Group();
-    hinge.position.set(0,HH-.004,sg*(HD-RAD+.006));flap.position.set(0,FT/2,-sg*FL/2);hinge.add(flap);
+    hinge.position.set(0,Y0+lift,sg*(HD-RAD+.006));flap.position.set(0,FT/2,-sg*FL/2);hinge.add(flap);
     hinge.rotation.x=sg*ang;boxMesh.add(hinge);
+  });
+  /* 양옆 작은 날개: 앞 날개가 들린 옆 틈을 받쳐서 이음새가 깔끔하게 보임 */
+  const dMat=new THREE.MeshStandardMaterial({map:eTex,color:0xf6f1ea,roughness:.95}),DL=.34,DZ=2*(HD-RAD)-.07;
+  [1,-1].forEach(sx=>{
+    const d=new THREE.Mesh(new THREE.BoxGeometry(DL,DT,DZ),[edge,edge,dMat,under,edge,edge]);
+    d.position.set(sx*(HW-RAD-DL/2+.002),Y0+DT/2,-.035);boxMesh.add(d);
   });
 }
 /* 돌리기: 드래그 + 관성, 가만두면 기본 각도로 돌아옴 */
