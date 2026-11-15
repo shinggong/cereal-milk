@@ -705,10 +705,14 @@ function swapPlate(dir){ // 다음: 왼쪽으로 나가고 오른쪽에서 들�
   if(swapping||plateType===cur)return;
   if(calm||!plateEl.animate){retype();return}
   swapping=true;const d=swapDir,w=tableEl.clientWidth;
-  const out=plateEl.animate([{transform:'translateX(0)'},{transform:`translateX(${-d*w}px)`}],{duration:380,easing:'cubic-bezier(.55,0,.75,.2)',fill:'forwards'});
+  const k=Math.min(1.4,w/720),T=(x,r=0)=>({transform:`translateX(${x*k}px) rotate(${r}deg)`});
+  /* 작용·반작용: 나가기 전 반대로 살짝 버티고, 들어와선 지나쳤다가 좌우로 흔들리며 멈춤. 우유는 한 박자 늦게 출렁 */
+  const out=plateEl.animate([{...T(0),easing:'ease-out'},{...T(d*16,d*.8),offset:.2,easing:'cubic-bezier(.55,0,.75,.2)'},{transform:`translateX(${-d*w}px) rotate(0deg)`}],{duration:460,fill:'forwards'});
+  milkC.animate([{transform:'translateX(0)'},{transform:`translateX(${-d*7*k}px)`,offset:.22},{transform:`translateX(${d*5*k}px)`,offset:.5},{transform:'translateX(0)'}],{duration:460,easing:'ease-in-out'});
   out.onfinish=()=>{
     retype();
-    const inn=plateEl.animate([{transform:`translateX(${d*w}px)`},{transform:'translateX(0)'}],{duration:520,easing:'cubic-bezier(.2,.8,.25,1)',fill:'forwards'});
+    const inn=plateEl.animate([{transform:`translateX(${d*w}px) rotate(0deg)`,easing:'cubic-bezier(.25,.75,.35,1)'},{...T(-d*24,-d*1.4),offset:.46,easing:'ease-in-out'},{...T(d*10,d*.6),offset:.66,easing:'ease-in-out'},{...T(-d*4,-d*.2),offset:.83,easing:'ease-in-out'},T(0)],{duration:900,fill:'forwards'});
+    milkC.animate([{transform:'translateX(0)'},{transform:'translateX(0)',offset:.4},{transform:`translateX(${-d*10*k}px)`,offset:.54},{transform:`translateX(${d*6*k}px)`,offset:.74},{transform:`translateX(${-d*2*k}px)`,offset:.9},{transform:'translateX(0)'}],{duration:900,easing:'ease-in-out'});
     inn.onfinish=()=>{out.cancel();inn.cancel();swapping=false;if(plateType!==cur)swapPlate(swapDir)};
   };
 }
@@ -786,6 +790,7 @@ function layout(){
     bgl.uniform2f(bgP.u.uRes,bgC.width,bgC.height);bgl.uniform2f(bgP.u.uC,cx*dpr,cy*dpr);bgl.uniform1f(bgP.u.uR,R*dpr);
     bgl.drawArrays(bgl.TRIANGLE_STRIP,0,4);
   }
+  plateEl.style.transformOrigin=`${cx}px ${cy}px`; // 흔들릴 때 그릇 중심 기준으로 기울게
   dishC.width=bgC.width;dishC.height=bgC.height;plateGeo={cx:cx*dpr,cy:cy*dpr,R:R*dpr};drawDish();
   layoutMenu();
 }
