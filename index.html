@@ -518,6 +518,7 @@ function bumpFor(f){ // 높낮이: 종이 결 + 윗면·아랫면 날개 이음�
   const c=document.createElement('canvas'),k=1.6;c.width=Math.round(f.w*k);c.height=Math.round(f.h*k);
   const x=c.getContext('2d'),r=seeded(f.w*7+f.h);x.scale(k,k);x.fillStyle='#808080';x.fillRect(0,0,f.w,f.h);
   for(let i=0,n=Math.round(f.w*f.h*1.2);i<n;i++){const v=96+r()*64|0;x.fillStyle=`rgb(${v},${v},${v})`;x.fillRect(r()*f.w,r()*f.h,.8,.8)}
+  if(f.name==='top'){x.fillStyle='rgba(255,255,255,.1)';x.fillRect(4,f.h*.4,f.w-8,f.h*.6);x.fillStyle='rgba(0,0,0,.35)';x.fillRect(4,f.h*.4-1,f.w-8,1)} // 앞 날개가 살짝 도톰하게
   if(f.name==='bottom'){
     x.strokeStyle='#2a2a2a';x.lineWidth=1.4;x.beginPath();x.moveTo(6,f.h/2);x.lineTo(f.w-6,f.h/2);x.stroke();
     x.strokeStyle='#5a5a5a';x.lineWidth=1;for(const yy of [f.h*.2,f.h*.8]){x.beginPath();x.moveTo(4,yy);x.lineTo(f.w-4,yy);x.stroke()}
@@ -577,8 +578,9 @@ function drawCap(n){
   if(n==='bottom'){x.strokeStyle='rgba(29,29,36,.28)';x.lineWidth=1;x.beginPath();x.moveTo(6,f.h/2);x.lineTo(f.w-6,f.h/2);x.stroke();
     x.fillStyle='rgba(120,100,60,.08)';for(let i=0;i<5;i++){x.beginPath();x.ellipse(40+i*55,f.h*.35,14,4,0,0,7);x.fill()}}
   else{ // 앞 날개 끝이 뒤 날개 위에 드리운 그림자
-    const ty=f.h*(.5-(2*(BD/2*U-RAD)*.62-(BD/2*U-RAD))/(BD*U)),g=x.createLinearGradient(0,ty+1,0,ty-14);
-    g.addColorStop(0,'rgba(40,28,20,.32)');g.addColorStop(.25,'rgba(40,28,20,.12)');g.addColorStop(1,'rgba(40,28,20,0)');x.fillStyle=g;x.fillRect(0,ty-14,f.w,15);
+    const ty=f.h*.4,g=x.createLinearGradient(0,ty,0,ty-6); // 앞 날개 끝선과 그 뒤로 드리운 얇은 그림자
+    g.addColorStop(0,'rgba(40,28,20,.22)');g.addColorStop(1,'rgba(40,28,20,0)');x.fillStyle=g;x.fillRect(4,ty-6,f.w-8,6);
+    x.fillStyle='rgba(255,255,255,.55)';x.fillRect(4,ty+.2,f.w-8,.7);
     x.fillStyle='rgba(29,29,36,.16)';x.beginPath();x.arc(f.w*.3,f.h*.62,1.6,0,7);x.arc(f.w*.7,f.h*.62,1.6,0,7);x.fill()}
   x.fillStyle='rgba(29,29,36,.55)';x.font='italic 500 9px "Playfair Display", Georgia, serif';x.textAlign='center';x.fillText(n==='top'?'Open Here':'MILK LETTERS',f.w/2,f.h*.62);x.textAlign='left';
 }
@@ -636,37 +638,9 @@ if(window.THREE){
     f.tex=new THREE.CanvasTexture(f.cv);f.tex.encoding=THREE.sRGBEncoding;f.tex.anisotropy=aniso;
     return paper(f.tex,bumpFor(f),.004);
   });
-  /* 윗면: 상자 안쪽(어두운 판지) 위에 뚜껑 날개가 살짝 들려 있음 */
-  const ic=document.createElement('canvas');ic.width=600;ic.height=192;const ix=ic.getContext('2d'),ig=ix.createLinearGradient(0,0,0,192);
-  const bu=RAD/(2*HW)*600,bv=RAD/(2*HD)*192; // 둥근 모서리 부분은 겉 종이색, 안쪽만 어두운 판지
-  ix.fillStyle='#f3efe8';ix.fillRect(0,0,600,192);ix.save();ix.scale(2,2);grainLayer({name:'rim',w:300,h:96},ix);ix.restore();
-  ig.addColorStop(0,'#2a221d');ig.addColorStop(.5,'#1b1512');ig.addColorStop(1,'#2a221d');ix.fillStyle=ig;ix.fillRect(bu,bv,600-2*bu,192-2*bv);
-  const inTex=new THREE.CanvasTexture(ic);inTex.encoding=THREE.sRGBEncoding;
-  mats[2]=new THREE.MeshStandardMaterial({map:inTex,color:0xe8e4de,roughness:1,metalness:0,envMapIntensity:.12});
+  /* 윗면: 진짜 상자처럼 닫힌 뚜껑. 앞 날개가 뒤 날개 위에 겹친 이음새는 그림·요철로만 표현 */
+  const topF=face('top');mats[2]=paper(topF.tex,bumpFor(topF),.004);mats[2].color.setHex(0xe8e4de); // 빛을 정면으로 받아 하얗게 날아가지 않게
   boxMesh=new THREE.Mesh(boxGeometry(),mats);boxMesh.rotation.order='XYZ';scene3.add(boxMesh);
-  const ec=document.createElement('canvas');ec.width=512;ec.height=16;const ex=ec.getContext('2d'),er=seeded(77); // 날개 두께 면도 판지 결
-  ex.fillStyle='#ddd2c4';ex.fillRect(0,0,512,16);for(let i=0;i<2600;i++){ex.fillStyle=er()<.55?`rgba(70,50,35,${.06+er()*.08})`:`rgba(255,255,255,${.08+er()*.1})`;ex.fillRect(er()*512,er()*16,1,1)}
-  const eTex=new THREE.CanvasTexture(ec);eTex.encoding=THREE.sRGBEncoding;eTex.anisotropy=aniso;
-  const edge=new THREE.MeshStandardMaterial({map:eTex,roughness:.95,envMapIntensity:.12}),under=new THREE.MeshStandardMaterial({color:0xcfc6ba,roughness:1,envMapIntensity:.12}); // 주변광 반사를 종이와 같게 낮춰야 하얗게 안 날아감
-  /* 앞뒤 두 날개: 둥근 모서리가 끝나는 자리에 붙어 있고, 길어서 가운데서 겹침 (앞 날개가 위) */
-  const topF=face('top'),topMat=paper(topF.tex,bumpFor(topF),.004),_tc=topMat.color.setHex(0xe8e4de),FT=.012,FL=2*(HD-RAD)*.62,ua=RAD/(2*HD),ub=FL/(2*HD);
-  const Y0=HH-.004,DT=.009; // 아래부터: 양옆 작은 날개 → 뒤 날개 → 앞 날개
-  [[1,.18,0],[-1,.015,DT]].forEach(([sg,ang,lift])=>{
-    const g=new THREE.BoxGeometry(2*(HW-RAD)+.004,FT,FL),uv=g.attributes.uv;
-    for(let i=8;i<12;i++)uv.setY(i,sg>0?ua+uv.getY(i)*ub:1-ua-ub+uv.getY(i)*ub); // 윗면 그림에서 자기 자리
-    const flap=new THREE.Mesh(g,[edge,edge,topMat,under,edge,edge]),hinge=new THREE.Group();
-    hinge.position.set(0,Y0+lift,sg*(HD-RAD+.006));flap.position.set(0,FT/2,-sg*FL/2);hinge.add(flap);
-    hinge.rotation.x=sg*ang;boxMesh.add(hinge);
-  });
-  /* 양옆 작은 날개: 앞 날개가 들린 옆 틈을 받쳐서 이음새가 깔끔하게 보임 */
-  const DL=.34,DZ=2*(HD-RAD)-.07,dc=document.createElement('canvas');dc.width=Math.round(DL/U*RES);dc.height=Math.round(DZ/U*RES);
-  {const x=dc.getContext('2d');x.scale(RES,RES);x.fillStyle='#f3efe8';x.fillRect(0,0,DL/U,DZ/U);grainLayer({name:'dust',w:DL/U,h:DZ/U},x)}
-  const dTex=new THREE.CanvasTexture(dc);dTex.encoding=THREE.sRGBEncoding;dTex.anisotropy=aniso;
-  const dMat=new THREE.MeshStandardMaterial({map:dTex,color:0xe8e4de,roughness:.95,envMapIntensity:.12});
-  [1,-1].forEach(sx=>{
-    const d=new THREE.Mesh(new THREE.BoxGeometry(DL,DT,DZ),[edge,edge,dMat,under,edge,edge]);
-    d.position.set(sx*(HW-RAD-DL/2+.002),Y0+DT/2,-.035);boxMesh.add(d);
-  });
 }
 /* 돌리기: 드래그 + 관성, 가만두면 기본 각도로 돌아옴 */
 const REST={rx:17,ry:28};
