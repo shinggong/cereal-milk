@@ -251,7 +251,7 @@ void main(){
  vec4 c=vec4(vec3(.42,.18,.26)*sa,sa);
  c=over(texture(uBowl,bu),c);
  // 스푼: 사진(spoon.png) 그대로, 그릇 오른쪽에 세로로. 사진 속 스푼 중심 (623,615), 802px = 1 (80% 크기)
- vec2 su=(vec2(623.5,615.)+(p-vec2(SPOON_X,0.))*802.5)/1254.;
+ vec2 su=(vec2(623.5,615.)+(p-vec2(SPOON_X,SPOON_Y))*802.5)/1254.;
  float ss=.2*textureLod(uSpoon,su-vec2(.02,.03),4.).a;
  c=over(vec4(vec3(.42,.18,.26)*ss,ss),c);
  c=over(texture(uSpoon,su),c);
@@ -259,8 +259,8 @@ void main(){
 }`;
 const bgl=null,bgP=null; // 천은 CSS 줄무늬로 그림
 const dgl=dishC.getContext('webgl2',{antialias:false,preserveDrawingBuffer:true,alpha:true,premultipliedAlpha:true});
-const SPOON_X=1.28,SPOON_R=1.46; // 스푼 중심·오른쪽 끝 (그릇 반지름=1)
-const dishP=dgl&&program(dgl,VS_FULL,FS_PLATE.replace('SPOON_X',SPOON_X.toFixed(3)));if(dgl)quad(dgl);
+const SPOON_X=1.28,SPOON_Y=.3,SPOON_R=1.46; // 스푼 중심·오른쪽 끝 (그릇 반지름=1, 아래가 +)
+const dishP=dgl&&program(dgl,VS_FULL,FS_PLATE.replace('SPOON_X',SPOON_X.toFixed(3)).replace('SPOON_Y',SPOON_Y.toFixed(3)));if(dgl)quad(dgl);
 let plateType=0,plateGeo=null;
 let bowlReady=0;
 if(dgl)[['bowl.webp',0],['spoon.png',1]].forEach(([src,unit])=>{ // 그릇·스푼 사진을 접시 셰이더 텍스처로
