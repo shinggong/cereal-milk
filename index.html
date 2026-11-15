@@ -240,7 +240,7 @@ void main(){
 /* 접시+포크: 투명 바탕 위에 그려서 통째로 밀고 들어옴 */
 const FS_PLATE=`#version 300 es
 ${BG_LIB}
-uniform sampler2D uBowl;
+uniform sampler2D uBowl,uSpoon;
 vec4 over(vec4 a,vec4 b){return a+b*(1.-a.a);}
 void main(){
  vec2 px=vec2(gl_FragCoord.x,uRes.y-gl_FragCoord.y),p=(px-uC)/uR;float aa=1.5/uR;
@@ -250,35 +250,33 @@ void main(){
  float sa=.22*textureLod(uBowl,bu-vec2(.012,.025),4.5).a;
  vec4 c=vec4(vec3(.42,.18,.26)*sa,sa);
  c=over(texture(uBowl,bu),c);
- vec2 D[2];D[0]=normalize(vec2(-.66,-.75));D[1]=normalize(vec2(.5,.87));float FS=.9,FD=.84+.64*FS;
- for(int k=0;k<2;k++){
-  mat2 F=frame(D[k]);vec2 lp=(F*p-vec2(0,FD))/FS;
-  vec2 ls=(F*(p-vec2(.02,.035))-vec2(0,FD))/FS;
-  float fs=.3*(1.-smoothstep(-.01,.03,forkShape(ls)));
-  c=over(vec4(vec3(.25,.1,.15)*fs,fs),c);
-  c=over(fork(lp),c);
- }
+ // 스푼: 사진(spoon.png) 그대로, 그릇 오른쪽에 세로로. 사진 속 스푼 중심 (623,615), 642px = 1
+ vec2 su=(vec2(623.5,615.)+(p-vec2(SPOON_X,0.))*642.)/1254.;
+ float ss=.2*textureLod(uSpoon,su-vec2(.02,.03),4.).a;
+ c=over(vec4(vec3(.42,.18,.26)*ss,ss),c);
+ c=over(texture(uSpoon,su),c);
  o=c;
 }`;
 const bgl=null,bgP=null; // 천은 CSS 줄무늬로 그림
 const dgl=dishC.getContext('webgl2',{antialias:false,preserveDrawingBuffer:true,alpha:true,premultipliedAlpha:true});
-const dishP=dgl&&program(dgl,VS_FULL,FS_PLATE);if(dgl)quad(dgl);
+const SPOON_X=1.32,SPOON_R=1.55; // 스푼 중심·오른쪽 끝 (그릇 반지름=1)
+const dishP=dgl&&program(dgl,VS_FULL,FS_PLATE.replace('SPOON_X',SPOON_X.toFixed(3)));if(dgl)quad(dgl);
 let plateType=0,plateGeo=null;
-let bowlReady=false;
-if(dgl){ // 그릇 사진을 접시 셰이더 텍스처로
+let bowlReady=0;
+if(dgl)[['bowl.webp',0],['spoon.png',1]].forEach(([src,unit])=>{ // 그릇·스푼 사진을 접시 셰이더 텍스처로
   const t=dgl.createTexture(),im=new Image();
-  im.onload=()=>{dgl.bindTexture(dgl.TEXTURE_2D,t);dgl.pixelStorei(dgl.UNPACK_PREMULTIPLY_ALPHA_WEBGL,true);
+  im.onload=()=>{dgl.activeTexture(dgl.TEXTURE0+unit);dgl.bindTexture(dgl.TEXTURE_2D,t);dgl.pixelStorei(dgl.UNPACK_PREMULTIPLY_ALPHA_WEBGL,true);
     dgl.texImage2D(dgl.TEXTURE_2D,0,dgl.RGBA,dgl.RGBA,dgl.UNSIGNED_BYTE,im);dgl.generateMipmap(dgl.TEXTURE_2D);
     dgl.texParameteri(dgl.TEXTURE_2D,dgl.TEXTURE_MIN_FILTER,dgl.LINEAR_MIPMAP_LINEAR);
     for(const w of [dgl.TEXTURE_WRAP_S,dgl.TEXTURE_WRAP_T])dgl.texParameteri(dgl.TEXTURE_2D,w,dgl.CLAMP_TO_EDGE);
-    bowlReady=true;drawDish()};
-  im.src='bowl.webp';
-}
+    if(++bowlReady===2)drawDish()};
+  im.src=src;
+});
 function drawDish(){
-  if(!dgl||!plateGeo||!bowlReady)return;const g=plateGeo,l=rgb(TYPES[plateType].line);
+  if(!dgl||!plateGeo||bowlReady<2)return;const g=plateGeo,l=rgb(TYPES[plateType].line);
   dgl.viewport(0,0,dishC.width,dishC.height);dgl.clearColor(0,0,0,0);dgl.clear(dgl.COLOR_BUFFER_BIT);dgl.useProgram(dishP.p);
   dgl.uniform2f(dishP.u.uRes,dishC.width,dishC.height);dgl.uniform2f(dishP.u.uC,g.cx,g.cy);dgl.uniform1f(dishP.u.uR,g.R);
-  dgl.uniform3f(dishP.u.uLine,l[0],l[1],l[2]);dgl.drawArrays(dgl.TRIANGLE_STRIP,0,4);
+  dgl.uniform3f(dishP.u.uLine,l[0],l[1],l[2]);dgl.uniform1i(dishP.u.uBowl,0);dgl.uniform1i(dishP.u.uSpoon,1);dgl.drawArrays(dgl.TRIANGLE_STRIP,0,4);
 }
 
 /* ---------- 시리얼 조각 굽기: 높이맵으로 표면을 만들어 잠길 때 가장자리부터 사라짐 ---------- */
@@ -804,7 +802,7 @@ function layout(){
   label.style.width=lw+'px';label.style.height=lh+'px';label.style.top=(mob?12:h-lh-bottomGap)+'px';
   input.style.fontSize=Math.max(16,34*sc)+'px';input.style.lineHeight=lh+'px';
   const top=mob?lh+22:0,areaH=mob?h-top-8:h-lh-bottomGap-16;
-  const R=Math.min(330,Math.min(w,areaH)/2/1.12),cx=w/2,cy=top+areaH/2;
+  const R=Math.min(330,w/((1+SPOON_R)*1.06),areaH/2/1.08),cx=w/2-(SPOON_R-1)/2*R,cy=top+areaH/2; // 그릇+오른쪽 스푼이 가운데 오도록
   const box=R*WELL*PAD;
   milkC.style.left=cx-box+'px';milkC.style.top=cy-box+'px';milkC.style.width=milkC.style.height=box*2+'px';
   milkC.width=milkC.height=Math.round(box*2*dpr);
