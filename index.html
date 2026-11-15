@@ -26,10 +26,14 @@ body{position:fixed;inset:0;font-family:var(--round);color:var(--body)}
 #scene canvas{display:block;width:100%;height:100%}
 .sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
 .arrow{position:absolute;top:50%;transform:translateY(-50%);width:max(44px,calc(80px*var(--ms,1)));height:max(44px,calc(80px*var(--ms,1)));
-  border:0;border-radius:50%;background:rgba(253,248,242,.2);cursor:pointer;display:grid;place-items:center;padding:0;transition:background .15s}
+  border:1px solid rgba(255,255,255,.45);border-radius:50%;cursor:pointer;display:grid;place-items:center;padding:0;transition:background .2s,box-shadow .2s;
+  /* Glass: 뒤 배경을 흐리게 + 위쪽 빛 반사 + 은은한 그림자 */
+  background:linear-gradient(155deg,rgba(255,255,255,.34),rgba(253,248,242,.12) 55%,rgba(253,248,242,.2));
+  -webkit-backdrop-filter:blur(10px) saturate(1.4);backdrop-filter:blur(10px) saturate(1.4);
+  box-shadow:inset 0 1px 1px rgba(255,255,255,.7),inset 0 -6px 12px rgba(255,255,255,.12),0 6px 18px rgba(40,70,110,.16)}
 .arrow svg{width:max(8px,calc(12px*var(--ms,1)));height:auto;overflow:visible}
 #prev{left:calc(67px*var(--ms,1))}#next{right:calc(67px*var(--ms,1))}
-.arrow:hover{background:rgba(253,248,242,.36)}
+.arrow:hover{background:linear-gradient(155deg,rgba(255,255,255,.46),rgba(253,248,242,.2) 55%,rgba(253,248,242,.3))}
 .arrow:focus-visible{outline:2px solid #fff;outline-offset:3px}
 #stars{position:absolute;inset:0;pointer-events:none}
 @property --acc{syntax:'<color>';inherits:true;initial-value:#FFCEDB}
@@ -708,16 +712,16 @@ function swapPlate(dir){ // 다음: 왼쪽으로 나가고 오른쪽에서 들�
   swapping=true;const d=swapDir,w=tableEl.clientWidth;
   const k=Math.min(1.4,w/720),T=(x,r=0)=>({transform:`translateX(${x*k}px) rotate(${r}deg)`});
   /* 작용·반작용: 나가기 전 반대로 살짝 버티고, 들어와선 지나쳤다가 좌우로 흔들리며 멈춤. 우유는 한 박자 늦게 출렁 */
-  const out=plateEl.animate([{...T(0),easing:'ease-out'},{...T(d*12,d*.6),offset:.24,easing:'cubic-bezier(.5,0,.7,.25)'},{transform:`translateX(${-d*w}px) rotate(0deg)`}],{duration:800,fill:'forwards'});
-  milkC.animate([{transform:'translateX(0)'},{transform:`translateX(${-d*6*k}px)`,offset:.26},{transform:`translateX(${d*4*k}px)`,offset:.52},{transform:'translateX(0)'}],{duration:800,easing:'ease-in-out'});
+  const out=plateEl.animate([{...T(0),easing:'ease-out'},{...T(d*4,d*.2),offset:.24,easing:'cubic-bezier(.5,0,.7,.25)'},{transform:`translateX(${-d*w}px) rotate(0deg)`}],{duration:800,fill:'forwards'});
+  milkC.animate([{transform:'translateX(0)'},{transform:`translateX(${-d*2*k}px)`,offset:.26},{transform:`translateX(${d*1*k}px)`,offset:.52},{transform:'translateX(0)'}],{duration:800,easing:'ease-in-out'});
   const spEl=$('spoon'),S=(x,r=0)=>({transform:`translateX(${x}px) rotate(${r}deg)`}); // 스푼은 그릇과 따로: 조금 늦게 출발하고 자기 박자로 흔들림
-  const sOut=spEl.animate([{...S(0),easing:'ease-out'},{...S(d*9*k,d*2.5),offset:.3,easing:'cubic-bezier(.5,0,.75,.2)'},S(-d*w,-d*4)],{duration:760,delay:140,fill:'forwards'});
-  sOut.onfinish=()=>{const sIn=spEl.animate([{...S(d*w,d*5),easing:'cubic-bezier(.3,.7,.4,1)'},{...S(-d*14*k,-d*3.5),offset:.5,easing:'ease-in-out'},{...S(d*5*k,d*1.5),offset:.72,easing:'ease-in-out'},{...S(-d*1.5*k,-d*.5),offset:.88,easing:'ease-in-out'},S(0)],{duration:1400,delay:200,fill:'both'});
+  const sOut=spEl.animate([{...S(0),easing:'ease-out'},{...S(d*3*k,d*.8),offset:.3,easing:'cubic-bezier(.5,0,.75,.2)'},S(-d*w,-d*4)],{duration:760,delay:140,fill:'forwards'});
+  sOut.onfinish=()=>{const sIn=spEl.animate([{...S(d*w,d*5),easing:'cubic-bezier(.3,.7,.4,1)'},{...S(-d*5*k,-d*1.2),offset:.55,easing:'ease-in-out'},{...S(d*1.2*k,d*.3),offset:.8,easing:'ease-in-out'},S(0)],{duration:1400,delay:200,fill:'both'});
     sIn.onfinish=()=>{sOut.cancel();sIn.cancel()}};
   out.onfinish=()=>{
     retype();
-    const inn=plateEl.animate([{transform:`translateX(${d*w}px) rotate(0deg)`,easing:'cubic-bezier(.3,.7,.4,1)'},{...T(-d*18,-d*1),offset:.48,easing:'ease-in-out'},{...T(d*7,d*.4),offset:.68,easing:'ease-in-out'},{...T(-d*2.5,-d*.15),offset:.85,easing:'ease-in-out'},T(0)],{duration:1600,fill:'forwards'});
-    milkC.animate([{transform:'translateX(0)'},{transform:'translateX(0)',offset:.4},{transform:`translateX(${-d*8*k}px)`,offset:.56},{transform:`translateX(${d*5*k}px)`,offset:.76},{transform:`translateX(${-d*1.5*k}px)`,offset:.91},{transform:'translateX(0)'}],{duration:1600,easing:'ease-in-out'});
+    const inn=plateEl.animate([{transform:`translateX(${d*w}px) rotate(0deg)`,easing:'cubic-bezier(.3,.7,.4,1)'},{...T(-d*6,-d*.3),offset:.55,easing:'ease-in-out'},{...T(d*1.5,d*.08),offset:.8,easing:'ease-in-out'},T(0)],{duration:1600,fill:'forwards'});
+    milkC.animate([{transform:'translateX(0)'},{transform:'translateX(0)',offset:.4},{transform:`translateX(${-d*3*k}px)`,offset:.6},{transform:`translateX(${d*1*k}px)`,offset:.82},{transform:'translateX(0)'}],{duration:1600,easing:'ease-in-out'});
     inn.onfinish=()=>{out.cancel();inn.cancel();swapping=false;if(plateType!==cur)swapPlate(swapDir)};
   };
 }
