@@ -32,11 +32,13 @@ body{position:fixed;inset:0;font-family:var(--round);color:var(--body)}
 .arrow:hover{background:rgba(253,248,242,.36)}
 .arrow:focus-visible{outline:2px solid #fff;outline-offset:3px}
 #stars{position:absolute;inset:0;pointer-events:none}
-#stars svg{position:absolute;display:block;fill:#FFCEDB}
+@property --acc{syntax:'<color>';inherits:true;initial-value:#FFCEDB}
+body{transition:--acc .6s ease}
+#stars svg{position:absolute;display:block;fill:var(--acc)}
 #dots{position:absolute;left:50%;bottom:24px;transform:translateX(-50%);display:flex;gap:8px}
 #dots span{width:8px;height:8px;border-radius:50%;background:rgba(255,255,255,.5)}
 #dots span.on{background:#fff}
-#table{position:relative;overflow:hidden;background:repeating-linear-gradient(90deg,#FFCEDB 0 var(--sw,21px),#FDF8F2 var(--sw,21px) calc(var(--sw,21px)*2))}
+#table{position:relative;overflow:hidden;background:repeating-linear-gradient(90deg,var(--acc) 0 var(--sw,21px),#FDF8F2 var(--sw,21px) calc(var(--sw,21px)*2))}
 #bg{display:none}
 #bg,#milk,#dish{position:absolute;display:block}
 #bg,#dish{inset:0;width:100%;height:100%}
@@ -574,7 +576,10 @@ function drawCap(n){
   const f=face(n),x=f.ctx;x.fillStyle='#f3efe8';x.fillRect(0,0,f.w,f.h);
   if(n==='bottom'){x.strokeStyle='rgba(29,29,36,.28)';x.lineWidth=1;x.beginPath();x.moveTo(6,f.h/2);x.lineTo(f.w-6,f.h/2);x.stroke();
     x.fillStyle='rgba(120,100,60,.08)';for(let i=0;i<5;i++){x.beginPath();x.ellipse(40+i*55,f.h*.35,14,4,0,0,7);x.fill()}}
-  else{x.fillStyle='rgba(29,29,36,.16)';x.beginPath();x.arc(f.w*.3,f.h*.62,1.6,0,7);x.arc(f.w*.7,f.h*.62,1.6,0,7);x.fill()}
+  else{ // 앞 날개 끝이 뒤 날개 위에 드리운 그림자
+    const ty=f.h*(.5-(2*(BD/2*U-RAD)*.62-(BD/2*U-RAD))/(BD*U)),g=x.createLinearGradient(0,ty+1,0,ty-14);
+    g.addColorStop(0,'rgba(40,28,20,.32)');g.addColorStop(.25,'rgba(40,28,20,.12)');g.addColorStop(1,'rgba(40,28,20,0)');x.fillStyle=g;x.fillRect(0,ty-14,f.w,15);
+    x.fillStyle='rgba(29,29,36,.16)';x.beginPath();x.arc(f.w*.3,f.h*.62,1.6,0,7);x.arc(f.w*.7,f.h*.62,1.6,0,7);x.fill()}
   x.fillStyle='rgba(29,29,36,.55)';x.font='italic 500 9px "Playfair Display", Georgia, serif';x.textAlign='center';x.fillText(n==='top'?'Open Here':'MILK LETTERS',f.w/2,f.h*.62);x.textAlign='left';
 }
 let boxType=-1;
@@ -639,12 +644,12 @@ if(window.THREE){
   const inTex=new THREE.CanvasTexture(ic);inTex.encoding=THREE.sRGBEncoding;
   mats[2]=new THREE.MeshStandardMaterial({map:inTex,roughness:1,metalness:0});
   boxMesh=new THREE.Mesh(boxGeometry(),mats);boxMesh.rotation.order='XYZ';scene3.add(boxMesh);
-  const edge=new THREE.MeshStandardMaterial({color:0xf4f0ea,roughness:.95}),under=new THREE.MeshStandardMaterial({color:0xcfc6ba,roughness:1});
-  /* 앞뒤 두 날개: 둥근 모서리가 끝나는 자리에 붙어서 가운데가 살짝 벌어짐 */
-  const topF=face('top'),topMat=paper(topF.tex,bumpFor(topF),.02),FT=.012,FL=HD-RAD-.012;
-  [[1,.1],[-1,.28]].forEach(([sg,ang])=>{
+  const edge=new THREE.MeshStandardMaterial({color:0xddd2c4,roughness:.95}),under=new THREE.MeshStandardMaterial({color:0xcfc6ba,roughness:1});
+  /* 앞뒤 두 날개: 둥근 모서리가 끝나는 자리에 붙어 있고, 길어서 가운데서 겹침 (앞 날개가 위) */
+  const topF=face('top'),topMat=paper(topF.tex,bumpFor(topF),.02),FT=.012,FL=2*(HD-RAD)*.62,ua=RAD/(2*HD),ub=FL/(2*HD);
+  [[1,.22],[-1,.06]].forEach(([sg,ang])=>{
     const g=new THREE.BoxGeometry(2*(HW-RAD)+.03,FT,FL),uv=g.attributes.uv;
-    for(let i=8;i<12;i++)uv.setY(i,sg>0?uv.getY(i)*.5:.5+uv.getY(i)*.5); // 윗면 그림의 앞/뒤 절반
+    for(let i=8;i<12;i++)uv.setY(i,sg>0?ua+uv.getY(i)*ub:1-ua-ub+uv.getY(i)*ub); // 윗면 그림에서 자기 자리
     const flap=new THREE.Mesh(g,[edge,edge,topMat,under,edge,edge]),hinge=new THREE.Group();
     hinge.position.set(0,HH-.004,sg*(HD-RAD+.006));flap.position.set(0,FT/2,-sg*FL/2);hinge.add(flap);
     hinge.rotation.x=sg*ang;boxMesh.add(hinge);
@@ -697,7 +702,7 @@ function layoutMenu(){
 
 function setType(i,dir){
   cur=(i+TYPES.length)%TYPES.length;const t=TYPES[cur];
-  $('cEn').textContent=t.en;
+  $('cEn').textContent=t.en;document.body.style.setProperty('--acc',t.box); // 별·줄무늬 색을 시리얼에 맞춤
   [...$('dots').children].forEach((d,k)=>d.classList.toggle('on',k===cur));
   swapPlate(dir||1);
   if(dir)spinBox(dir);
