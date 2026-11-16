@@ -136,6 +136,29 @@ const FS_MILK=`#version 300 es
 precision highp float;
 uniform vec2 uRes;uniform float uT,uPad;uniform int uN;uniform vec4 uRip[16];out vec4 o;
 float h21(vec2 p){p=fract(p*vec2(123.34,456.21));p+=dot(p,p+45.32);return fract(p.x*p.y);}
+// 가장자리 거품: 벽을 따라 드문드문 + 두 군데 뭉친 기포
+float foamDens(vec2 c,float big){
+ float r=length(c),band=smoothstep(.74,.9,r)*(1.-smoothstep(.93,.975,r));
+ vec2 a=c-vec2(.55,-.6),b=c-vec2(-.62,.5);
+ float cl=min(1.,1.4*max(exp(-dot(a,a)/.06),exp(-dot(b,b)/.045)));
+ return band*mix(.15+.85*cl,cl,big);
+}
+vec3 foam(vec2 p,float cell,float seed,float big){ // x 기포 안쪽, y 테두리 빛, z 반사점
+ vec2 id=floor(p/cell);vec3 acc=vec3(0);
+ for(int j=-1;j<=1;j++)for(int i=-1;i<=1;i++){
+  vec2 c=id+vec2(i,j);
+  vec2 ctr=(c+.5+(vec2(h21(c+seed+1.7),h21(c+seed+3.1))-.5)*.5)*cell;
+  if(h21(c+seed)>foamDens(ctr,big))continue;
+  float rad=cell*(.26+.24*h21(c+seed+5.3));
+  vec2 u=(p-ctr)/rad;float l=length(u);if(l>1.3)continue;
+  float in_=1.-smoothstep(.8,1.,l);
+  float rim=exp(-pow((l-.93)/.08,2.));
+  float sp=exp(-dot(u-vec2(-.38,-.42),u-vec2(-.38,-.42))/.03);
+  float shd=in_*smoothstep(.2,.95,dot(u,vec2(.6,.7)));
+  acc=max(acc,vec3(in_*.6+shd*.8,rim,sp));
+ }
+ return acc;
+}
 void main(){
  vec2 q=(gl_FragCoord.xy/uRes*2.-1.)*uPad;q.y=-q.y;
  float r=length(q),aa=2.5*uPad/uRes.x;
@@ -151,6 +174,10 @@ void main(){
  vec3 col=vec3(1.,.985,.955)*(.7+.48*dot(n,L));
  col*=1.-.07*smoothstep(.8,1.,r);
  col*=mix(vec3(1),vec3(.93,.88,.88),smoothstep(.9,1.05,length(q-vec2(.07,.1))));
+ vec2 fp=q+g*.8;
+ vec3 f=max(max(max(foam(fp,.016,7.,1.),foam(fp,.028,0.,0.)),foam(fp,.05,17.,0.)),foam(fp,.11,41.,1.));
+ col=mix(col,col*vec3(.9,.875,.83),f.x*.55);
+ col+=vec3(1.,.99,.97)*(f.y*.13+f.z*.4);
  col*=.99+.02*h21(gl_FragCoord.xy*.31);
  o=vec4(col*edge,edge);
 }`;
