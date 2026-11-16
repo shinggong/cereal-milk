@@ -97,15 +97,15 @@ const tableEl=$('table'), bgC=$('bg'), dishC=$('dish'), plateEl=$('plate'), milk
 /* ---------- 시리얼 종류 ---------- */
 const TYPES=[
   {ko:'알록달록 퍼프',en:'Fruity Puffs',desc:'과일색으로 물든, 송송 구멍 난 퍼프',surf:'puff',
-   line:'#28356f',box:'#cfe5f6',bowl:'#f4b6c8',colors:['#39a7dc','#e23a3f','#f4ac2c','#e8833a','#3fb46e','#f0728c','#8a63c9'],dome:.07,relief:7,shine:34,gloss:.2},
+   line:'#28356f',box:'#cfe5f6',bowl:'#f4b6c8',colors:['#e8857f','#f3c447','#a5b25a','#ee9241','#ecd39c'],dome:.07,relief:7,shine:34,gloss:.2},
   {ko:'초코 크런치',en:'Choco Crunch',desc:'반질반질 코코아로 코팅한 진한 초코',surf:'choco',
-   line:'#6a3624',box:'#dcbba6',bowl:'#f3e2c8',colors:['#5b2d1f','#6a3624','#4b2418'],dome:.075,relief:9,shine:55,gloss:.42},
+   line:'#6a3624',box:'#dcbba6',bowl:'#f3e2c8',colors:['#6b3a26','#7a4630','#5a2e1e'],dome:.075,relief:9,shine:55,gloss:.42},
   {ko:'황금 콘플레이크',en:'Golden Flakes',desc:'바삭하게 구워 결이 살아 있는 황금빛',surf:'flake',
-   line:'#c77a1a',box:'#f6d77f',bowl:'#9fc3ea',colors:['#f0ac35','#e99c27','#f4bd4a'],dome:.08,relief:10,shine:26,gloss:.12},
+   line:'#c77a1a',box:'#f6d77f',bowl:'#9fc3ea',colors:['#efb14a','#e8a23a','#f3c25e'],dome:.08,relief:10,shine:26,gloss:.12},
   {ko:'딸기 프로스트',en:'Strawberry Frost',desc:'설탕 알갱이가 반짝이는 분홍 딸기맛',surf:'frost',
-   line:'#d0607f',box:'#f7c4d2',bowl:'#b9b8ef',colors:['#f08aa6','#ea7096','#f4a0b8','#e5608a'],dome:.07,relief:8,shine:70,gloss:.3},
+   line:'#d0607f',box:'#f7c4d2',bowl:'#b9b8ef',colors:['#ec9a9c','#e5808a','#f1b0ae','#de7480'],dome:.07,relief:8,shine:70,gloss:.3},
   {ko:'꿀 고리',en:'Honey Rings',desc:'꿀을 입혀 윤기 나는 호박빛 시리얼',surf:'honey',
-   line:'#b0701c',box:'#f4c886',bowl:'#c8e3b5',colors:['#e49a35','#d98a2a','#eba944'],dome:.085,relief:8,shine:70,gloss:.6}
+   line:'#b0701c',box:'#f4c886',bowl:'#c8e3b5',colors:['#e39a3e','#d68a30','#ebab52'],dome:.085,relief:8,shine:70,gloss:.6}
 ];
 let cur=0;
 
@@ -391,13 +391,13 @@ function bake(mask,o){
   return {tex:mk(px),aux:mk(aux),tint:o.tint};
 }
 function letterMask(ch,seed){
-  const em=S*.6,hangul=/[ᄀ-ᇿ㄰-㆏가-힣]/.test(ch);
-  mx.clearRect(0,0,S,S);mx.font=`700 ${em}px ${FONT}`;mx.textAlign='center';mx.textBaseline='alphabetic';
+  const hangul=/[ᄀ-ᇿ㄰-㆏가-힣]/.test(ch),em=S*(hangul?.66:.6); // 한글은 획이 촘촘해서 굵게·번지게 하지 않음
+  mx.clearRect(0,0,S,S);mx.font=`${hangul?400:700} ${em}px ${FONT}`;mx.textAlign='center';mx.textBaseline='alphabetic';
   mx.fillStyle=mx.strokeStyle='#fff';mx.lineJoin='round';mx.lineWidth=S*(hangul?.012:.03);
-  const y=S/2+em*.35;mx.fillText(ch,S/2,y);mx.strokeText(ch,S/2,y);
+  const y=S/2+em*.35;mx.fillText(ch,S/2,y);if(!hangul)mx.strokeText(ch,S/2,y);
   const d=mx.getImageData(0,0,S,S).data,a=new Float32Array(N);for(let i=0;i<N;i++)a[i]=d[i*4+3]/255;
-  const b=boxBlur(a,Math.round(S*.009),3);
-  for(let y2=0;y2<S;y2++)for(let x=0;x<S;x++){const i=y2*S+x;b[i]=b[i]+(fbm(x*.03,y2*.03,seed)-.5)*.34>.5?1:0}
+  const b=boxBlur(a,Math.round(S*(hangul?.004:.009)),3),amp=hangul?.14:.34;
+  for(let y2=0;y2<S;y2++)for(let x=0;x<S;x++){const i=y2*S+x;b[i]=b[i]+(fbm(x*.03,y2*.03,seed)-.5)*amp>.5?1:0}
   return b;
 }
 function surfaceFor(ty,seed,base){
