@@ -30,7 +30,7 @@ body{position:fixed;inset:0;font-family:var(--round);color:var(--body)}
   /* Glass: 뒤 배경을 흐리게 + 위쪽 빛 반사 + 은은한 그림자 */
   background:linear-gradient(155deg,rgba(255,255,255,.34),rgba(253,248,242,.12) 55%,rgba(253,248,242,.2));
   -webkit-backdrop-filter:blur(10px) saturate(1.4);backdrop-filter:blur(10px) saturate(1.4);
-  box-shadow:inset 0 1px 1px rgba(255,255,255,.7),inset 0 -6px 12px rgba(255,255,255,.12),0 6px 18px rgba(40,70,110,.16)}
+  box-shadow:inset 0 1px 1px rgba(255,255,255,.7),inset 0 -6px 12px rgba(255,255,255,.12)}
 .arrow svg{width:max(8px,calc(12px*var(--ms,1)));height:auto;overflow:visible}
 #prev{left:calc(67px*var(--ms,1))}#next{right:calc(67px*var(--ms,1))}
 .arrow:hover{background:linear-gradient(155deg,rgba(255,255,255,.46),rgba(253,248,242,.2) 55%,rgba(253,248,242,.3))}
@@ -250,13 +250,13 @@ void main(){
 /* 접시+포크: 투명 바탕 위에 그려서 통째로 밀고 들어옴 */
 const FS_PLATE=`#version 300 es
 ${BG_LIB}
-uniform sampler2D uBowl;
+uniform sampler2D uBowl;uniform vec3 uBF;
 vec4 over(vec4 a,vec4 b){return a+b*(1.-a.a);}
 void main(){
  vec2 px=vec2(gl_FragCoord.x,uRes.y-gl_FragCoord.y),p=(px-uC)/uR;float aa=1.5/uR;
  float r=length(p),th=atan(p.y,p.x);
- // 그릇: 사진(bowl.webp) 그대로. 사진 속 그릇 중심 (994,994), 바깥 반지름 833px = uR
- vec2 bu=(vec2(994.,994.)+p*833.)/2000.;
+ // 그릇: 사진 그대로. uBF = 사진 속 그릇 중심(x,y), 바깥 반지름(px) → uR
+ vec2 bu=(uBF.xy+p*uBF.z)/2000.;
  float sa=.22*textureLod(uBowl,bu-vec2(.012,.025),4.5).a;
  vec4 c=vec4(vec3(.42,.18,.26)*sa,sa);
  c=over(texture(uBowl,bu),c);
@@ -268,20 +268,23 @@ const SPOON_X=1.28,SPOON_Y=.3,SPOON_R=1.46; // 스푼 중심·오른쪽 끝 (그
 const dishP=dgl&&program(dgl,VS_FULL,FS_PLATE);if(dgl)quad(dgl);
 let plateType=0,plateGeo=null;
 let bowlReady=0;
-if(dgl)[['bowl.webp',0]].forEach(([src,unit])=>{ // 그릇·스푼 사진을 접시 셰이더 텍스처로
+// 컬러별 그릇 사진 [파일, 중심x, 중심y, 반지름]
+const BOWLS=[['bowl.webp',994,994,833],['bowl-pink.webp',996,980.5,843],['bowl-cream.webp',997.5,980.5,858],['bowl-yellow.webp',997,985,850]];
+const TYPE_BOWL=[0,2,3,1,2]; // 퍼프=파랑, 초코=크림, 콘플=노랑, 딸기=핑크, 꿀=크림
+if(dgl)BOWLS.forEach(([src],unit)=>{ // 그릇·스푼 사진을 접시 셰이더 텍스처로
   const t=dgl.createTexture(),im=new Image();
   im.onload=()=>{dgl.activeTexture(dgl.TEXTURE0+unit);dgl.bindTexture(dgl.TEXTURE_2D,t);dgl.pixelStorei(dgl.UNPACK_PREMULTIPLY_ALPHA_WEBGL,true);
     dgl.texImage2D(dgl.TEXTURE_2D,0,dgl.RGBA,dgl.RGBA,dgl.UNSIGNED_BYTE,im);dgl.generateMipmap(dgl.TEXTURE_2D);
     dgl.texParameteri(dgl.TEXTURE_2D,dgl.TEXTURE_MIN_FILTER,dgl.LINEAR_MIPMAP_LINEAR);
     for(const w of [dgl.TEXTURE_WRAP_S,dgl.TEXTURE_WRAP_T])dgl.texParameteri(dgl.TEXTURE_2D,w,dgl.CLAMP_TO_EDGE);
-    if(++bowlReady===1)drawDish()};
+    if(++bowlReady===BOWLS.length)drawDish()};
   im.src=src;
 });
 function drawDish(){
-  if(!dgl||!plateGeo||bowlReady<1)return;const g=plateGeo,l=rgb(TYPES[plateType].line);
+  if(!dgl||!plateGeo||bowlReady<BOWLS.length)return;const g=plateGeo,bi=TYPE_BOWL[plateType],bf=BOWLS[bi],l=rgb(TYPES[plateType].line);
   dgl.viewport(0,0,dishC.width,dishC.height);dgl.clearColor(0,0,0,0);dgl.clear(dgl.COLOR_BUFFER_BIT);dgl.useProgram(dishP.p);
   dgl.uniform2f(dishP.u.uRes,dishC.width,dishC.height);dgl.uniform2f(dishP.u.uC,g.cx,g.cy);dgl.uniform1f(dishP.u.uR,g.R);
-  dgl.uniform3f(dishP.u.uLine,l[0],l[1],l[2]);dgl.uniform1i(dishP.u.uBowl,0);dgl.drawArrays(dgl.TRIANGLE_STRIP,0,4);
+  dgl.uniform3f(dishP.u.uLine,l[0],l[1],l[2]);dgl.uniform1i(dishP.u.uBowl,bi);dgl.uniform3f(dishP.u.uBF,bf[1],bf[2],bf[3]);dgl.drawArrays(dgl.TRIANGLE_STRIP,0,4);
 }
 
 /* ---------- 시리얼 조각 굽기: 높이맵으로 표면을 만들어 잠길 때 가장자리부터 사라짐 ---------- */
