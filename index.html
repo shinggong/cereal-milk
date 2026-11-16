@@ -104,7 +104,7 @@ const TYPES=[
   {ko:'초코 크런치',en:'Choco Crunch',desc:'반질반질 코코아로 코팅한 진한 초코',surf:'choco',
    line:'#6a3624',box:'#dcbba6',bowl:'#f3e2c8',colors:['#94603f','#a36d4a','#865437'],dome:.075,relief:9,shine:55,gloss:.42},
   {ko:'황금 콘플레이크',en:'Golden Flakes',desc:'바삭하게 구워 결이 살아 있는 황금빛',surf:'flake',
-   line:'#c77a1a',box:'#f6d77f',bowl:'#9fc3ea',colors:['#ffbf40','#ffb030','#ffcb57'],dome:.08,relief:10,shine:20,gloss:.02},
+   line:'#c77a1a',box:'#f6d77f',bowl:'#9fc3ea',colors:['#ffbf40','#ffb030','#ffcb57'],dome:.08,relief:10,shine:20,gloss:.02,matte:1},
   {ko:'딸기 프로스트',en:'Strawberry Frost',desc:'설탕 알갱이가 반짝이는 분홍 딸기맛',surf:'frost',
    line:'#d0607f',box:'#f7c4d2',bowl:'#b9b8ef',colors:['#ec9a9c','#e5808a','#f1b0ae','#de7480'],dome:.07,relief:8,shine:70,gloss:.3},
   {ko:'꿀 고리',en:'Honey Rings',desc:'꿀을 입혀 윤기 나는 호박빛 시리얼',surf:'honey',
@@ -196,12 +196,12 @@ void main(){vUv=aP*.5+.5;float c=cos(uRot),s=sin(uRot);vec2 p=uPos+mat2(c,s,-s,c
  gl_Position=vec4(p.x/uPad,-p.y/uPad,0.,1.);}`;
 const FS_HALO=`#version 300 es
 precision highp float;
-in vec2 vUv;uniform sampler2D uAux;uniform vec3 uTint;uniform float uVis;out vec4 o;
+in vec2 vUv;uniform sampler2D uAux;uniform vec3 uTint;uniform float uVis,uMatte;out vec4 o;
 void main(){
  vec4 a=texture(uAux,vUv);
  float sh=texture(uAux,vUv-vec2(.016,.022)).g;
  float rim=clamp(texture(uAux,vUv+vec2(.012,.016)).g-a.g,0.,1.);
- float a1=a.r*.34*uVis,a2=sh*.30*uVis,a3=rim*.85*uVis;
+ float a1=a.r*.34*uVis,a2=sh*.30*(1.-.5*uMatte)*uVis,a3=rim*.85*(1.-.75*uMatte)*uVis;
  vec4 c=vec4(uTint*a1,a1);
  c=vec4(pow(uTint,vec3(1.5))*.6*a2,a2)+c*(1.-a2); // 그림자도 글자 색 계열로
  c=vec4(vec3(1.)*a3,a3)+c*(1.-a3);
@@ -375,13 +375,13 @@ function bake(mask,o){
     if(!inside[i]){const a=.1*Math.max(0,1-dOut[i]/2.5);const c=tex.albedo(x,y,0);
       px[j]=c[0]*170;px[j+1]=c[1]*170;px[j+2]=c[2]*170;px[j+3]=a*255;continue}
     const xl=Math.max(0,x-1),xr=Math.min(S-1,x+1),yu=Math.max(0,y-1),yd=Math.min(S-1,y+1);
-    const k=o.relief,nx=-(hgt[y*S+xr]-hgt[y*S+xl])*k,ny=-(hgt[yd*S+x]-hgt[yu*S+x])*k,nl=1/Math.hypot(nx,ny,1);
+    const m=o.matte||0,k=o.relief*(1-.45*m),nx=-(hgt[y*S+xr]-hgt[y*S+xl])*k,ny=-(hgt[yd*S+x]-hgt[yu*S+x])*k,nl=1/Math.hypot(nx,ny,1);
     const n0=nx*nl,n1=ny*nl,n2=nl;
     const lam=Math.max(0,n0*L[0]+n1*L[1]+n2*L[2]);
     const sp=Math.pow(Math.max(0,n0*H[0]+n1*H[1]+n2*H[2]),o.shine)*o.gloss;
-    const u=Math.min(1,dIn[i]/o.dome),ao=.74+.26*u;
+    const u=Math.min(1,dIn[i]/o.dome),ao=1-(.26-.26*u)*(1-.7*m); // matte: 가장자리 어둡기·명암 대비 줄임
     const c=tex.albedo(x,y,hgt[i]);
-    for(let e=0;e<3;e++)px[j+e]=Math.min(255,(c[e]*(.5+.74*lam)*ao+sp)*255);
+    for(let e=0;e<3;e++)px[j+e]=Math.min(255,(c[e]*((.5+.22*m)+(.74-.32*m)*lam)*ao+sp)*255);
     px[j+3]=(.1+.9*Math.min(1,Math.max(0,hgt[i])))*255;
   }
   if(o.pixels)return {px};
@@ -391,7 +391,7 @@ function bake(mask,o){
     gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA,S,S,0,gl.RGBA,gl.UNSIGNED_BYTE,d);gl.generateMipmap(gl.TEXTURE_2D);
     gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MIN_FILTER,gl.LINEAR_MIPMAP_LINEAR);
     gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_S,gl.CLAMP_TO_EDGE);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_T,gl.CLAMP_TO_EDGE);return t};
-  return {tex:mk(px),aux:mk(aux),tint:o.tint};
+  return {tex:mk(px),aux:mk(aux),tint:o.tint,matte:o.matte||0};
 }
 function letterMask(ch,seed){
   const hangul=/[ᄀ-ᇿ㄰-㆏가-힣]/.test(ch),em=S*(hangul?.6*HG:.6); // 한글은 조금 크게, 번짐은 약하게
@@ -427,7 +427,7 @@ function surfaceFor(ty,seed,base){
 }
 function bakeLetter(ch,hex,ti,pixels){
   const ty=TYPES[ti],seed=(ch.codePointAt(0)*7+hex.charCodeAt(2)*13+ti*31)%9973,base=rgb(hex);
-  return bake(letterMask(ch,seed),{seed,surface:surfaceFor(ty,seed,base),dome:S*ty.dome,relief:ty.relief,shine:ty.shine,gloss:ty.gloss,tint:base,pixels});
+  return bake(letterMask(ch,seed),{seed,surface:surfaceFor(ty,seed,base),dome:S*ty.dome,relief:ty.relief,shine:ty.shine,gloss:ty.gloss,matte:ty.matte,tint:base,pixels});
 }
 /* ---------- 글자 상태 ---------- */
 const sprites=new Map();
@@ -816,7 +816,7 @@ function frame(t){
   gl.useProgram(haloP.p);
   for(const d of draw){
     const s=d.spr;drawSprite(haloP,s.aux,0,d,d.half,d.drot);
-    gl.uniform1i(haloP.u.uAux,0);gl.uniform3fv(haloP.u.uTint,s.tint);gl.uniform1f(haloP.u.uVis,d.vis);
+    gl.uniform1i(haloP.u.uAux,0);gl.uniform3fv(haloP.u.uTint,s.tint);gl.uniform1f(haloP.u.uVis,d.vis);gl.uniform1f(haloP.u.uMatte,s.matte);
     gl.drawArrays(gl.TRIANGLE_STRIP,0,4);
   }
   gl.useProgram(bodyP.p);
