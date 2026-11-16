@@ -100,7 +100,7 @@ const tableEl=$('table'), bgC=$('bg'), dishC=$('dish'), plateEl=$('plate'), milk
 /* ---------- 시리얼 종류 ---------- */
 const TYPES=[
   {ko:'알록달록 퍼프',en:'Fruity Puffs',desc:'과일색으로 물든, 송송 구멍 난 퍼프',surf:'puff',
-   line:'#28356f',box:'#cfe5f6',bowl:'#f4b6c8',colors:['#e8857f','#f3c447','#a5b25a','#ee9241','#ecd39c'],dome:.07,relief:7,shine:34,gloss:.2},
+   line:'#28356f',box:'#cfe5f6',bowl:'#f4b6c8',colors:['#e8857f','#f3c447','#a5b25a','#ee9241','#ecd39c'],dome:.07,relief:7,shine:34,gloss:.2,matte:.6},
   {ko:'황금 콘플레이크',en:'Golden Flakes',desc:'바삭하게 구워 결이 살아 있는 황금빛',surf:'flake',
    line:'#c77a1a',box:'#f6d77f',bowl:'#9fc3ea',colors:['#ffbf40','#ffb030','#ffcb57'],dome:.08,relief:10,shine:20,gloss:.02,matte:1},
   {ko:'딸기 프로스트',en:'Strawberry Frost',desc:'설탕 알갱이가 반짝이는 분홍 딸기맛',surf:'frost',
@@ -422,7 +422,7 @@ function surfaceFor(ty,seed,base){
       albedo:(x,y,h)=>sc(lerp(dark,light,Math.min(1,Math.max(0,h))),.96+.06*hash(x>>1,y>>1,seed))}}
     default:return{
       height(x,y,d,u){const p=pitAt(x,y),k=p<.26?(.26-p)/.26:0;return d*(.8+.2*fbm(x*.04,y*.04,seed+3))-k*.2*u-.03*hash(x>>1,y>>1,seed)*u},
-      albedo:(x,y)=>sc(base,(pitAt(x,y)<.22?.76:1)*(.92+.2*hash(x>>1,y>>1,seed+4)))};
+      albedo:(x,y)=>sc(base,(pitAt(x,y)<.22?.86:1)*(.92+.2*hash(x>>1,y>>1,seed+4)))};
   }
 }
 function bakeLetter(ch,hex,ti,pixels){
