@@ -102,9 +102,9 @@ const TYPES=[
   {ko:'알록달록 퍼프',en:'Fruity Puffs',desc:'과일색으로 물든, 송송 구멍 난 퍼프',surf:'puff',
    line:'#28356f',box:'#cfe5f6',bowl:'#f4b6c8',colors:['#e8857f','#f3c447','#a5b25a','#ee9241','#ecd39c'],dome:.07,relief:7,shine:34,gloss:.2},
   {ko:'초코 크런치',en:'Choco Crunch',desc:'반질반질 코코아로 코팅한 진한 초코',surf:'choco',
-   line:'#6a3624',box:'#dcbba6',bowl:'#f3e2c8',colors:['#6b3a26','#7a4630','#5a2e1e'],dome:.075,relief:9,shine:55,gloss:.42},
+   line:'#6a3624',box:'#dcbba6',bowl:'#f3e2c8',colors:['#94603f','#a36d4a','#865437'],dome:.075,relief:9,shine:55,gloss:.42},
   {ko:'황금 콘플레이크',en:'Golden Flakes',desc:'바삭하게 구워 결이 살아 있는 황금빛',surf:'flake',
-   line:'#c77a1a',box:'#f6d77f',bowl:'#9fc3ea',colors:['#efb14a','#e8a23a','#f3c25e'],dome:.08,relief:10,shine:26,gloss:.12},
+   line:'#c77a1a',box:'#f6d77f',bowl:'#9fc3ea',colors:['#ffbf40','#ffb030','#ffcb57'],dome:.08,relief:10,shine:26,gloss:.12},
   {ko:'딸기 프로스트',en:'Strawberry Frost',desc:'설탕 알갱이가 반짝이는 분홍 딸기맛',surf:'frost',
    line:'#d0607f',box:'#f7c4d2',bowl:'#b9b8ef',colors:['#ec9a9c','#e5808a','#f1b0ae','#de7480'],dome:.07,relief:8,shine:70,gloss:.3},
   {ko:'꿀 고리',en:'Honey Rings',desc:'꿀을 입혀 윤기 나는 호박빛 시리얼',surf:'honey',
@@ -203,7 +203,7 @@ void main(){
  float rim=clamp(texture(uAux,vUv+vec2(.012,.016)).g-a.g,0.,1.);
  float a1=a.r*.34*uVis,a2=sh*.30*uVis,a3=rim*.85*uVis;
  vec4 c=vec4(uTint*a1,a1);
- c=vec4(vec3(.42,.3,.24)*a2,a2)+c*(1.-a2);
+ c=vec4(pow(uTint,vec3(1.5))*.6*a2,a2)+c*(1.-a2); // 그림자도 글자 색 계열로
  c=vec4(vec3(1.)*a3,a3)+c*(1.-a3);
  o=c;
 }`;
@@ -411,9 +411,9 @@ function surfaceFor(ty,seed,base){
     case 'choco':return{
       height:(x,y,d,u)=>d*(.9+.1*fbm(x*.03,y*.03,seed+3))-.02*hash(x>>1,y>>1,seed)*u,
       albedo:(x,y)=>sc(base,(.88+.22*fbm(x*.06,y*.06,seed))*(hash(x>>1,y>>1,seed+4)>.94?.72:1))};
-    case 'flake':{const rid=(x,y)=>Math.abs(fbm(x*.022,y*.022,seed+7)-.5)*2,lo=sc(base,.78),hi=lerp(base,[1,.93,.7],.35);return{
+    case 'flake':{const rid=(x,y)=>Math.abs(fbm(x*.022,y*.022,seed+7)-.5)*2,lo=sc(base,.93),hi=lerp(base,[1,.9,.55],.3);return{
       height:(x,y,d,u)=>d*.66+rid(x,y)*.3*u+.05*fbm(x*.09,y*.09,seed),
-      albedo:(x,y,h)=>sc(lerp(lo,hi,Math.min(1,rid(x,y)*2.4)),(.93+.14*hash(x>>1,y>>1,seed))*(.8+.2*Math.min(1,h*2)))}}
+      albedo:(x,y,h)=>sc(lerp(lo,hi,Math.min(1,rid(x,y)*2.4)),(.93+.14*hash(x>>1,y>>1,seed))*(.92+.08*Math.min(1,h*2)))}}
     case 'frost':{const sugar=(x,y)=>worley(x*.12,y*.12,seed+21)<.2;return{
       height:(x,y,d,u)=>d*(.82+.18*fbm(x*.04,y*.04,seed+3))+(sugar(x,y)?.07*u:0),
       albedo:(x,y)=>sugar(x,y)?lerp(base,[1,1,1],.78):sc(base,.92+.14*hash(x>>1,y>>1,seed+4))}}
@@ -468,7 +468,7 @@ const measure=(()=>{const c=document.createElement('canvas').getContext('2d');re
 function relayout(){
   const n=letters.length;if(!n)return;
   const adv=letters.map(l=>measure(l.ch)),total=adv.reduce((a,b)=>a+b,0);
-  const RT=.86,CY=0,LH=1.02,EM=LETTER_EM;let best=null;
+  const RT=.86,CY=0,LH=1.14,EM=LETTER_EM;let best=null;
   const wrap=maxW=>{ // 엔터는 항상 줄을 나누고, 긴 줄은 단어 단위로 접음
     const rows=[];let row=[],w=0;
     const flush=()=>{while(row.length&&isBlank(letters[row[row.length-1]].ch))row.pop();rows.push(row);row=[];w=0};
