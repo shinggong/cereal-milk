@@ -104,7 +104,7 @@ const TYPES=[
   {ko:'초코 크런치',en:'Choco Crunch',desc:'반질반질 코코아로 코팅한 진한 초코',surf:'choco',
    line:'#6a3624',box:'#dcbba6',bowl:'#f3e2c8',colors:['#94603f','#a36d4a','#865437'],dome:.075,relief:9,shine:55,gloss:.42},
   {ko:'황금 콘플레이크',en:'Golden Flakes',desc:'바삭하게 구워 결이 살아 있는 황금빛',surf:'flake',
-   line:'#c77a1a',box:'#f6d77f',bowl:'#9fc3ea',colors:['#ffbf40','#ffb030','#ffcb57'],dome:.08,relief:10,shine:26,gloss:.12},
+   line:'#c77a1a',box:'#f6d77f',bowl:'#9fc3ea',colors:['#ffbf40','#ffb030','#ffcb57'],dome:.08,relief:10,shine:20,gloss:.02},
   {ko:'딸기 프로스트',en:'Strawberry Frost',desc:'설탕 알갱이가 반짝이는 분홍 딸기맛',surf:'frost',
    line:'#d0607f',box:'#f7c4d2',bowl:'#b9b8ef',colors:['#ec9a9c','#e5808a','#f1b0ae','#de7480'],dome:.07,relief:8,shine:70,gloss:.3},
   {ko:'꿀 고리',en:'Honey Rings',desc:'꿀을 입혀 윤기 나는 호박빛 시리얼',surf:'honey',
@@ -411,7 +411,7 @@ function surfaceFor(ty,seed,base){
     case 'choco':return{
       height:(x,y,d,u)=>d*(.9+.1*fbm(x*.03,y*.03,seed+3))-.02*hash(x>>1,y>>1,seed)*u,
       albedo:(x,y)=>sc(base,(.88+.22*fbm(x*.06,y*.06,seed))*(hash(x>>1,y>>1,seed+4)>.94?.72:1))};
-    case 'flake':{const rid=(x,y)=>Math.abs(fbm(x*.022,y*.022,seed+7)-.5)*2,lo=sc(base,.93),hi=lerp(base,[1,.9,.55],.3);return{
+    case 'flake':{const rid=(x,y)=>Math.abs(fbm(x*.022,y*.022,seed+7)-.5)*2,lo=sc(base,.93),hi=lerp(base,[1,.9,.55],.15);return{
       height:(x,y,d,u)=>d*.66+rid(x,y)*.3*u+.05*fbm(x*.09,y*.09,seed),
       albedo:(x,y,h)=>sc(lerp(lo,hi,Math.min(1,rid(x,y)*2.4)),(.93+.14*hash(x>>1,y>>1,seed))*(.92+.08*Math.min(1,h*2)))}}
     case 'frost':{const sugar=(x,y)=>worley(x*.12,y*.12,seed+21)<.2;return{
@@ -578,8 +578,12 @@ function wrapText(x,text,X,Y,maxW,lh){const words=text.split(' ');let line='',y=
   for(const w of words){const t=line?line+' '+w:w;if(x.measureText(t).width>maxW&&line){x.fillText(line,X,y);line=w;y+=lh}else line=t}
   x.fillText(line,X,y);return y}
 const INK='#1d1d24';
+const FRONT_IMG={3:'box-strawberry.webp'}; // 앞면을 통째로 그림으로 쓰는 시리얼
+const frontImgs={};
+for(const [k,src] of Object.entries(FRONT_IMG)){const im=new Image();im.onload=()=>{if(boxType===+k){drawFront(TYPES[k],null);finish(face('front'))}};im.src=src;frontImgs[k]=im}
 function drawFront(t,imgs){
   const x=face('front').ctx;x.clearRect(0,0,BW,BH);
+  const fi=frontImgs[TYPES.indexOf(t)];if(fi&&fi.naturalWidth){x.drawImage(fi,0,0,BW,BH);return}
   x.fillStyle='#fbf8f3';x.fillRect(0,0,BW,BH);
   x.fillStyle=t.box;rr(x,14,14,BW-28,BH-28,6);x.fill();
   x.fillStyle=INK;x.font='700 31px Fredoka, sans-serif';x.textBaseline='alphabetic';x.fillText('MILK LETTERS',30,62);
