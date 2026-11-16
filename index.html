@@ -17,7 +17,9 @@
   color-scheme:light;
 }
 html,body{height:100%;margin:0;overflow:hidden;background:var(--menu)}
-@font-face{font-family:Cocochoi;src:url(cocochoi.ttf) format('truetype');font-display:swap} /* 그리운 코코초이툰: 시리얼 글자 */
+/* 시리얼 글자: 영문 그리운 코코초이툰, 한글 온글잎 밑미 */
+@font-face{font-family:Cereal;src:url(cocochoi.ttf) format('truetype');font-display:swap}
+@font-face{font-family:Cereal;src:url(meetme.ttf) format('truetype');font-display:swap;unicode-range:U+1100-11FF,U+3130-318F,U+AC00-D7A3}
 body{position:fixed;inset:0;font-family:var(--round);color:var(--body)}
 #app{display:grid;grid-template-columns:1fr 1fr;height:100%}
 #menu{position:relative;overflow:hidden;background:linear-gradient(#5ba5d4,#9fcdeb 62%,#d6ebf7)}
@@ -88,7 +90,7 @@ body{--ink2:color-mix(in oklch,var(--acc) 76%,#000);--ink3:color-mix(in oklch,va
 <script>
 'use strict';
 const LETTER_EM=.22, HOLD_MS=3000, SINK_MS=1700, RISE_MS=480, PAD=1.03, WELL=.78;
-const FONT='Cocochoi, Fredoka, Jua, "Apple SD Gothic Neo", "Noto Sans KR", sans-serif';
+const FONT='Cereal, Fredoka, Jua, "Apple SD Gothic Neo", "Noto Sans KR", sans-serif';
 const MOBILE='(max-width:760px),(max-aspect-ratio:4/5)';
 const calm=matchMedia('(prefers-reduced-motion: reduce)').matches;
 const $=id=>document.getElementById(id);
@@ -393,7 +395,7 @@ function bake(mask,o){
 function letterMask(ch,seed){
   const hangul=/[ᄀ-ᇿ㄰-㆏가-힣]/.test(ch),em=S*.6; // 한글은 획이 촘촘해서 굵게·번지게 하지 않음
   mx.clearRect(0,0,S,S);mx.font=`${hangul?400:700} ${em}px ${FONT}`;mx.textAlign='center';mx.textBaseline='alphabetic';
-  mx.fillStyle=mx.strokeStyle='#fff';mx.lineJoin='round';mx.lineWidth=S*(hangul?.012:.03);
+  mx.fillStyle=mx.strokeStyle='#fff';mx.lineJoin='round';mx.lineWidth=S*(hangul?.012:.045);
   const y=S/2+em*.35;mx.fillText(ch,S/2,y);if(!hangul)mx.strokeText(ch,S/2,y);
   const d=mx.getImageData(0,0,S,S).data,a=new Float32Array(N);for(let i=0;i<N;i++)a[i]=d[i*4+3]/255;
   const b=boxBlur(a,Math.round(S*(hangul?.004:.009)),3),amp=hangul?.14:.34;
@@ -460,7 +462,7 @@ function sink(l,delay,dur){
   if(isBlank(l.ch)||!l.spr){l.state='gone';return}
   l.state='sink';l.t0=now;l.delay=delay;l.dur=dur;l.rippled=false;leaving.push(l);
 }
-const measure=(()=>{const c=document.createElement('canvas').getContext('2d');return ch=>{c.font=`700 100px ${FONT}`;return isBlank(ch)?.34:c.measureText(ch).width/100+.1}})();
+const measure=(()=>{const c=document.createElement('canvas').getContext('2d');return ch=>{c.font=`700 100px ${FONT}`;return isBlank(ch)?.34:c.measureText(ch).width/100+.13}})();
 function relayout(){
   const n=letters.length;if(!n)return;
   const adv=letters.map(l=>measure(l.ch)),total=adv.reduce((a,b)=>a+b,0);
