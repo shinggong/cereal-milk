@@ -108,7 +108,7 @@ const TYPES=[
   {ko:'딸기 프로스트',en:'Strawberry Frost',desc:'설탕 알갱이가 반짝이는 분홍 딸기맛',surf:'frost',
    line:'#d0607f',box:'#f7c4d2',bowl:'#b9b8ef',colors:['#ec9a9c','#e5808a','#f1b0ae','#de7480'],dome:.07,relief:8,shine:70,gloss:.3},
   {ko:'꿀 고리',en:'Honey Rings',desc:'꿀을 입혀 윤기 나는 호박빛 시리얼',surf:'honey',
-   line:'#b0701c',box:'#f4c886',bowl:'#c8e3b5',colors:['#e39a3e','#d68a30','#ebab52'],dome:.085,relief:8,shine:70,gloss:.6}
+   line:'#b0701c',box:'#f4c886',bowl:'#c8e3b5',colors:['#e39a3e','#d68a30','#ebab52'],dome:.085,relief:8,shine:20,gloss:.02,matte:1}
 ];
 let cur=0;
 
@@ -417,7 +417,7 @@ function surfaceFor(ty,seed,base){
     case 'frost':{const sugar=(x,y)=>worley(x*.12,y*.12,seed+21)<.2;return{
       height:(x,y,d,u)=>d*(.82+.18*fbm(x*.04,y*.04,seed+3))+(sugar(x,y)?.07*u:0),
       albedo:(x,y)=>sugar(x,y)?lerp(base,[1,1,1],.78):sc(base,.92+.14*hash(x>>1,y>>1,seed+4))}}
-    case 'honey':{const dark=sc(base,.72),light=lerp(base,[1,.9,.62],.4);return{
+    case 'honey':{const dark=sc(base,.88),light=lerp(base,[1,.9,.62],.4);return{
       height:(x,y,d)=>d*(.95+.05*fbm(x*.03,y*.03,seed)),
       albedo:(x,y,h)=>sc(lerp(dark,light,Math.min(1,Math.max(0,h))),.96+.06*hash(x>>1,y>>1,seed))}}
     default:return{
@@ -578,7 +578,7 @@ function wrapText(x,text,X,Y,maxW,lh){const words=text.split(' ');let line='',y=
   for(const w of words){const t=line?line+' '+w:w;if(x.measureText(t).width>maxW&&line){x.fillText(line,X,y);line=w;y+=lh}else line=t}
   x.fillText(line,X,y);return y}
 const INK='#1d1d24';
-const FRONT_IMG={3:'box-strawberry.webp'}; // 앞면을 통째로 그림으로 쓰는 시리얼
+const FRONT_IMG={1:'box-choco.webp',3:'box-strawberry.webp',4:'box-honey.webp'}; // 앞면을 통째로 그림으로 쓰는 시리얼
 const frontImgs={};
 for(const [k,src] of Object.entries(FRONT_IMG)){const im=new Image();im.onload=()=>{if(boxType===+k){drawFront(TYPES[k],null);finish(face('front'))}};im.src=src;frontImgs[k]=im}
 function drawFront(t,imgs){
