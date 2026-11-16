@@ -579,7 +579,8 @@ function wrapText(x,text,X,Y,maxW,lh){const words=text.split(' ');let line='',y=
   x.fillText(line,X,y);return y}
 const INK='#1d1d24';
 const FRONT_IMG={0:'box-fruity.webp',1:'box-gold.webp',2:'box-strawberry.webp',3:'box-choco.webp',4:'box-honey.webp'}; // 시리얼별 앞면 그림
-const frontImgs={};
+const frontImgs={},backImgs={},BACK_NAME=['fruity','gold','strawberry','choco','honey'];
+BACK_NAME.forEach((n,k)=>{const im=new Image();im.onload=()=>{if(boxType===k){drawBack(TYPES[k]);finish(face('back'))}};im.src=`back-${n}.webp`;backImgs[k]=im}); // 시리얼별 뒷면 그림
 for(const [k,src] of Object.entries(FRONT_IMG)){const im=new Image();im.onload=()=>{if(boxType===+k){drawFront(TYPES[k],null);finish(face('front'))}};im.src=src;frontImgs[k]=im}
 function drawFront(t,imgs){
   const x=face('front').ctx;x.clearRect(0,0,BW,BH);
@@ -609,6 +610,7 @@ function drawFront(t,imgs){
 }
 function drawBack(t){
   const x=face('back').ctx;x.fillStyle='#fbf8f3';x.fillRect(0,0,BW,BH);
+  const bi=backImgs[TYPES.indexOf(t)];if(bi&&bi.naturalWidth){x.drawImage(bi,14,14,BW-28,BH-28);return}
   x.fillStyle=t.box;x.globalAlpha=.55;rr(x,14,14,BW-28,BH-28,6);x.fill();x.globalAlpha=1;
   x.fillStyle=INK;x.font='italic 500 30px "Playfair Display", Georgia, serif';
   ['Type a word.','Watch it float.','Then it sinks.'].forEach((l,i)=>x.fillText(l,32,92+i*42));
