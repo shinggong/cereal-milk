@@ -155,7 +155,7 @@ vec3 foam(vec2 p,float cell,float seed,float big){ // x 기포 안쪽, y 테두�
   float rim=exp(-pow((l-.93)/.08,2.));
   float sp=exp(-dot(u-vec2(-.38,-.42),u-vec2(-.38,-.42))/.03);
   float shd=in_*smoothstep(.2,.95,dot(u,vec2(.6,.7)));
-  acc=max(acc,vec3(in_*.6+shd*.8,rim,sp));
+  acc=max(acc,vec3(in_*.35+shd*.3,rim,sp));
  }
  return acc;
 }
@@ -173,11 +173,11 @@ void main(){
  vec3 n=normalize(vec3(-g,1.)),L=normalize(vec3(-.5,-.65,.6));
  vec3 col=vec3(1.,.985,.955)*(.7+.48*dot(n,L));
  col*=1.-.07*smoothstep(.8,1.,r);
- col*=mix(vec3(1),vec3(.93,.88,.88),smoothstep(.9,1.05,length(q-vec2(.07,.1))));
+ col*=mix(vec3(1),vec3(.95,.935,.91),smoothstep(.88,1.05,length(q-vec2(.05,.07))));
  vec2 fp=q+g*.8;
  vec3 f=max(max(max(foam(fp,.016,7.,1.),foam(fp,.028,0.,0.)),foam(fp,.05,17.,0.)),foam(fp,.11,41.,1.));
- col=mix(col,col*vec3(.9,.875,.83),f.x*.55);
- col+=vec3(1.,.99,.97)*(f.y*.13+f.z*.4);
+ col=mix(col,col*vec3(.95,.94,.91),f.x*.6);
+ col+=vec3(1.,.995,.98)*(f.y*.16+f.z*.35);
  col*=.99+.02*h21(gl_FragCoord.xy*.31);
  o=vec4(col*edge,edge);
 }`;
