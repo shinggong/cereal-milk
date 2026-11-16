@@ -17,7 +17,7 @@
   color-scheme:light;
 }
 html,body{height:100%;margin:0;overflow:hidden;background:var(--menu)}
-@font-face{font-family:Meetme;src:url(meetme.ttf) format('truetype');font-display:swap} /* 온글잎 밑미: 시리얼 글자 */
+@font-face{font-family:Cocochoi;src:url(cocochoi.ttf) format('truetype');font-display:swap} /* 그리운 코코초이툰: 시리얼 글자 */
 body{position:fixed;inset:0;font-family:var(--round);color:var(--body)}
 #app{display:grid;grid-template-columns:1fr 1fr;height:100%}
 #menu{position:relative;overflow:hidden;background:linear-gradient(#5ba5d4,#9fcdeb 62%,#d6ebf7)}
@@ -88,7 +88,7 @@ body{--ink2:color-mix(in oklch,var(--acc) 76%,#000);--ink3:color-mix(in oklch,va
 <script>
 'use strict';
 const LETTER_EM=.22, HOLD_MS=3000, SINK_MS=1700, RISE_MS=480, PAD=1.03, WELL=.78;
-const FONT='Meetme, Fredoka, Jua, "Apple SD Gothic Neo", "Noto Sans KR", sans-serif';
+const FONT='Cocochoi, Fredoka, Jua, "Apple SD Gothic Neo", "Noto Sans KR", sans-serif';
 const MOBILE='(max-width:760px),(max-aspect-ratio:4/5)';
 const calm=matchMedia('(prefers-reduced-motion: reduce)').matches;
 const $=id=>document.getElementById(id);
@@ -391,7 +391,7 @@ function bake(mask,o){
   return {tex:mk(px),aux:mk(aux),tint:o.tint};
 }
 function letterMask(ch,seed){
-  const hangul=/[ᄀ-ᇿ㄰-㆏가-힣]/.test(ch),em=S*(hangul?.66:.6); // 한글은 획이 촘촘해서 굵게·번지게 하지 않음
+  const hangul=/[ᄀ-ᇿ㄰-㆏가-힣]/.test(ch),em=S*.6; // 한글은 획이 촘촘해서 굵게·번지게 하지 않음
   mx.clearRect(0,0,S,S);mx.font=`${hangul?400:700} ${em}px ${FONT}`;mx.textAlign='center';mx.textBaseline='alphabetic';
   mx.fillStyle=mx.strokeStyle='#fff';mx.lineJoin='round';mx.lineWidth=S*(hangul?.012:.03);
   const y=S/2+em*.35;mx.fillText(ch,S/2,y);if(!hangul)mx.strokeText(ch,S/2,y);
