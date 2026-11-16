@@ -579,11 +579,19 @@ function wrapText(x,text,X,Y,maxW,lh){const words=text.split(' ');let line='',y=
   x.fillText(line,X,y);return y}
 const INK='#1d1d24';
 const FRONT_IMG={1:'box-choco.webp',3:'box-strawberry.webp',4:'box-honey.webp'}; // 앞면을 통째로 그림으로 쓰는 시리얼
-const frontImgs={};
+const frontImgs={},FRONT_INSET=new Set([1,4]);
 for(const [k,src] of Object.entries(FRONT_IMG)){const im=new Image();im.onload=()=>{if(boxType===+k){drawFront(TYPES[k],null);finish(face('front'))}};im.src=src;frontImgs[k]=im}
 function drawFront(t,imgs){
   const x=face('front').ctx;x.clearRect(0,0,BW,BH);
-  const fi=frontImgs[TYPES.indexOf(t)];if(fi&&fi.naturalWidth){x.drawImage(fi,0,0,BW,BH);return}
+  const ix=TYPES.indexOf(t),fi=frontImgs[ix];
+  if(fi&&fi.naturalWidth){
+    if(FRONT_INSET.has(ix)){ // 흰 테두리 안에 작게 + 얇은 아웃라인 (딸기 박스처럼)
+      const m=14,w=BW-m*2,h=BH-m*2,sw=fi.naturalHeight*w/h;
+      x.fillStyle='#fbf8f3';x.fillRect(0,0,BW,BH);
+      x.save();rr(x,m,m,w,h,4);x.clip();x.drawImage(fi,(fi.naturalWidth-sw)/2,0,sw,fi.naturalHeight,m,m,w,h);x.restore();
+      x.strokeStyle=t.line;x.lineWidth=1;rr(x,m,m,w,h,4);x.stroke();
+    }else x.drawImage(fi,0,0,BW,BH);
+    return}
   x.fillStyle='#fbf8f3';x.fillRect(0,0,BW,BH);
   x.fillStyle=t.box;rr(x,14,14,BW-28,BH-28,6);x.fill();
   x.fillStyle=INK;x.font='700 31px Fredoka, sans-serif';x.textBaseline='alphabetic';x.fillText('MILK LETTERS',30,62);
