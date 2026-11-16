@@ -149,13 +149,18 @@ vec3 foam(vec2 p,float cell,float seed,float big){ // x 기포 안쪽, y 테두�
   vec2 c=id+vec2(i,j);
   vec2 ctr=(c+.5+(vec2(h21(c+seed+1.7),h21(c+seed+3.1))-.5)*.5)*cell;
   if(h21(c+seed)>foamDens(ctr,big))continue;
-  float rad=cell*(.26+.24*h21(c+seed+5.3));
+  float rad=cell*(.26+.24*h21(c+seed+5.3)),k=1.;
+  if(h21(c+seed+8.9)<.35){ // 일부 기포는 천천히 생겼다가 톡 터짐
+   float lf=fract(uT/(8.+8.*h21(c+seed+2.2))+h21(c+seed+4.4));
+   k=smoothstep(0.,.25,lf)*(1.-smoothstep(.88,.9,lf));
+   if(k<.01)continue;rad*=mix(.35,1.,k);
+  }
   vec2 u=(p-ctr)/rad;float l=length(u);if(l>1.3)continue;
   float in_=1.-smoothstep(.8,1.,l);
   float rim=exp(-pow((l-.93)/.08,2.));
   float sp=exp(-dot(u-vec2(-.38,-.42),u-vec2(-.38,-.42))/.03);
   float shd=in_*smoothstep(.2,.95,dot(u,vec2(.6,.7)));
-  acc=max(acc,vec3(in_*.35+shd*.3,rim,sp));
+  acc=max(acc,vec3(in_*.35+shd*.3,rim,sp)*k);
  }
  return acc;
 }
