@@ -101,12 +101,12 @@ const tableEl=$('table'), bgC=$('bg'), dishC=$('dish'), plateEl=$('plate'), milk
 const TYPES=[
   {ko:'알록달록 퍼프',en:'Fruity Puffs',desc:'과일색으로 물든, 송송 구멍 난 퍼프',surf:'puff',
    line:'#28356f',box:'#cfe5f6',bowl:'#f4b6c8',colors:['#e8857f','#f3c447','#a5b25a','#ee9241','#ecd39c'],dome:.07,relief:7,shine:34,gloss:.2},
-  {ko:'초코 크런치',en:'Choco Crunch',desc:'반질반질 코코아로 코팅한 진한 초코',surf:'choco',
-   line:'#6a3624',box:'#dcbba6',bowl:'#f3e2c8',colors:['#94603f','#a36d4a','#865437'],dome:.075,relief:9,shine:55,gloss:.42},
   {ko:'황금 콘플레이크',en:'Golden Flakes',desc:'바삭하게 구워 결이 살아 있는 황금빛',surf:'flake',
    line:'#c77a1a',box:'#f6d77f',bowl:'#9fc3ea',colors:['#ffbf40','#ffb030','#ffcb57'],dome:.08,relief:10,shine:20,gloss:.02,matte:1},
   {ko:'딸기 프로스트',en:'Strawberry Frost',desc:'설탕 알갱이가 반짝이는 분홍 딸기맛',surf:'frost',
    line:'#d0607f',box:'#f7c4d2',bowl:'#b9b8ef',colors:['#ec9a9c','#e5808a','#f1b0ae','#de7480'],dome:.07,relief:8,shine:70,gloss:.3},
+  {ko:'초코 크런치',en:'Choco Crunch',desc:'반질반질 코코아로 코팅한 진한 초코',surf:'choco',
+   line:'#6a3624',box:'#dcbba6',bowl:'#f3e2c8',colors:['#94603f','#a36d4a','#865437'],dome:.075,relief:9,shine:55,gloss:.42},
   {ko:'꿀 고리',en:'Honey Rings',desc:'꿀을 입혀 윤기 나는 호박빛 시리얼',surf:'honey',
    line:'#b0701c',box:'#f4c886',bowl:'#c8e3b5',colors:['#e39a3e','#d68a30','#ebab52'],dome:.085,relief:8,shine:20,gloss:.02,matte:1}
 ];
@@ -306,7 +306,7 @@ let plateType=0,plateGeo=null;
 let bowlReady=0;
 // 컬러별 그릇 사진 [파일, 중심x, 중심y, 반지름]
 const BOWLS=[['bowl.webp',994,994,833],['bowl-pink.webp',996,980.5,843],['bowl-cream.webp',997.5,980.5,858],['bowl-yellow.webp',997,985,850]];
-const TYPE_BOWL=[0,2,3,1,2]; // 퍼프=파랑, 초코=크림, 콘플=노랑, 딸기=핑크, 꿀=크림
+const TYPE_BOWL=[0,3,1,2,2]; // 퍼프=파랑, 콘플=노랑, 딸기=핑크, 초코=크림, 꿀=크림
 if(dgl)BOWLS.forEach(([src],unit)=>{ // 그릇·스푼 사진을 접시 셰이더 텍스처로
   const t=dgl.createTexture(),im=new Image();
   im.onload=()=>{dgl.activeTexture(dgl.TEXTURE0+unit);dgl.bindTexture(dgl.TEXTURE_2D,t);dgl.pixelStorei(dgl.UNPACK_PREMULTIPLY_ALPHA_WEBGL,true);
@@ -578,19 +578,15 @@ function wrapText(x,text,X,Y,maxW,lh){const words=text.split(' ');let line='',y=
   for(const w of words){const t=line?line+' '+w:w;if(x.measureText(t).width>maxW&&line){x.fillText(line,X,y);line=w;y+=lh}else line=t}
   x.fillText(line,X,y);return y}
 const INK='#1d1d24';
-const FRONT_IMG={1:'box-choco.webp',3:'box-strawberry.webp',4:'box-honey.webp'}; // 앞면을 통째로 그림으로 쓰는 시리얼
-const frontImgs={},FRONT_INSET=new Set([1,4]);
+const FRONT_IMG={0:'box-fruity.webp',1:'box-gold.webp',2:'box-strawberry.webp',3:'box-choco.webp',4:'box-honey.webp'}; // 시리얼별 앞면 그림
+const frontImgs={};
 for(const [k,src] of Object.entries(FRONT_IMG)){const im=new Image();im.onload=()=>{if(boxType===+k){drawFront(TYPES[k],null);finish(face('front'))}};im.src=src;frontImgs[k]=im}
 function drawFront(t,imgs){
   const x=face('front').ctx;x.clearRect(0,0,BW,BH);
   const ix=TYPES.indexOf(t),fi=frontImgs[ix];
   if(fi&&fi.naturalWidth){
-    if(FRONT_INSET.has(ix)){ // 흰 테두리 안에 작게 + 얇은 아웃라인 (딸기 박스처럼)
-      const m=14,w=BW-m*2,h=BH-m*2,sw=fi.naturalHeight*w/h;
-      x.fillStyle='#fbf8f3';x.fillRect(0,0,BW,BH);
-      x.save();rr(x,m,m,w,h,4);x.clip();x.drawImage(fi,(fi.naturalWidth-sw)/2,0,sw,fi.naturalHeight,m,m,w,h);x.restore();
-      x.strokeStyle=t.line;x.lineWidth=1;rr(x,m,m,w,h,4);x.stroke();
-    }else x.drawImage(fi,0,0,BW,BH);
+    const m=14; // 흰 종이 위에 테두리 있는 그림을 작게 (그림 자체에 아웃라인·둥근 모서리 있음)
+    x.fillStyle='#fbf8f3';x.fillRect(0,0,BW,BH);x.drawImage(fi,m,m,BW-m*2,BH-m*2);
     return}
   x.fillStyle='#fbf8f3';x.fillRect(0,0,BW,BH);
   x.fillStyle=t.box;rr(x,14,14,BW-28,BH-28,6);x.fill();
