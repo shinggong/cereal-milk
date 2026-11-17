@@ -48,7 +48,8 @@ body{transition:--acc 1.8s cubic-bezier(.45,0,.25,1)}
 #table{position:relative;overflow:hidden;background:repeating-linear-gradient(90deg,var(--acc) 0 var(--sw,21px),#FDF8F2 var(--sw,21px) calc(var(--sw,21px)*2))}
 #bg{display:none}
 #bg,#milk,#dish{position:absolute;display:block}
-#bg,#dish{inset:0;width:100%;height:100%}
+#bg{inset:0;width:100%;height:100%}
+#dish{left:0;top:0} /* 크기는 layout()에서 px로 고정 → 창 크기 바꾸는 중엔 늘어나지 않고 우유와 같이 멈춰 있음 */
 #plate{position:absolute;inset:0;pointer-events:none}
 #spoon{position:absolute;pointer-events:none;filter:drop-shadow(5px 9px 7px rgb(var(--sh,107 46 66) / .22))} /* 스푼은 그릇과 따로 움직임 (swapPlate) */
 #label{position:absolute;left:50%;transform:translateX(-50%);box-sizing:border-box;
@@ -859,11 +860,11 @@ function layout(){
   {const sz=1254/802.5*R,sp=$('spoon').style; // 스푼 사진: 그릇 반지름 1 기준 802.5px, 사진 속 스푼 중심 (623.5,615)
     sp.width=sp.height=sz+'px';sp.left=cx+SPOON_X*R-623.5/1254*sz+'px';sp.top=cy+SPOON_Y*R-615/1254*sz+'px'}
   plateEl.style.transformOrigin=`${cx}px ${cy}px`; // 흔들릴 때 그릇 중심 기준으로 기울게
-  dishC.width=bgC.width;dishC.height=bgC.height;plateGeo={cx:cx*dpr,cy:cy*dpr,R:R*dpr};drawDish();
+  dishC.width=bgC.width;dishC.height=bgC.height;dishC.style.width=w+'px';dishC.style.height=h+'px';plateGeo={cx:cx*dpr,cy:cy*dpr,R:R*dpr};drawDish();
   layoutMenu();
 }
 let rz=0;
-addEventListener('resize',()=>{clearTimeout(rz);rz=setTimeout(layout,120)});
+addEventListener('resize',()=>{clearTimeout(rz);rz=setTimeout(layout,200)});
 
 /* ---------- 시작 ---------- */
 setType(0);drawBox(0);requestAnimationFrame(boxFrame);
